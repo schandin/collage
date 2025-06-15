@@ -9,11 +9,21 @@ import { CheckCircle, Zap } from 'lucide-react';
 import Link from 'next/link';
 
 function PlanCard({ plan }: { plan: SubscriptionPlan }) {
+  const getPlanDescription = (planName: string) => {
+    if (planName.toLowerCase() === 'básico') {
+      return "Ideal para comenzar";
+    }
+    if (planName.toLowerCase().includes("profesional") || planName.toLowerCase().includes("avanzado") || planName.toLowerCase().includes("priority")) {
+        return "Recomendado";
+    }
+    return `Ideal para ${planName.toLowerCase()}`;
+  }
+
   return (
-    <Card className={`flex flex-col shadow-lg hover:shadow-2xl transition-shadow duration-300 ${plan.name.includes("Profesional") ? 'border-primary border-2' : ''}`}>
+    <Card className={`flex flex-col shadow-lg hover:shadow-2xl transition-shadow duration-300 ${plan.name.includes("Priority") || plan.name.includes("Avanzado") ? 'border-primary border-2' : ''}`}>
       <CardHeader className="p-6 bg-muted/30">
         <CardTitle className="text-3xl font-headline text-primary text-center">{plan.name}</CardTitle>
-        <CardDescription className="text-center text-muted-foreground text-sm">{plan.name.includes("Profesional") ? "Recomendado" : `Ideal para ${plan.name.toLowerCase()}`}</CardDescription>
+        <CardDescription className="text-center text-muted-foreground text-sm">{getPlanDescription(plan.name)}</CardDescription>
       </CardHeader>
       <CardContent className="p-6 flex-grow">
         <div className="text-center mb-6">
@@ -34,7 +44,7 @@ function PlanCard({ plan }: { plan: SubscriptionPlan }) {
         <Button 
           asChild
           size="lg" 
-          className={`w-full ${plan.name.includes("Profesional") ? 'bg-accent hover:bg-accent/90 text-accent-foreground' : 'bg-primary hover:bg-primary/90'}`}
+          className={`w-full ${plan.name.includes("Priority") || plan.name.includes("Avanzado") ? 'bg-accent hover:bg-accent/90 text-accent-foreground' : 'bg-primary hover:bg-primary/90'}`}
         >
           <Link href={`/pago/${plan.id}`}>Suscribirse a {plan.name}</Link>
         </Button>
@@ -78,4 +88,3 @@ export default function SuscripcionesPage() {
     </div>
   );
 }
-
