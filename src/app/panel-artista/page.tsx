@@ -46,7 +46,7 @@ export default function PanelArtistaPage() {
     country: '',
     bio: '',
     email: '',
-    profileImageUrl: '', // Will store Data URL or original URL
+    profileImageUrl: '', 
     dataAiHint: '', 
     instagram: '',
     facebook: '',
@@ -87,12 +87,12 @@ export default function PanelArtistaPage() {
         country: existingArtist.country,
         bio: existingArtist.bio || '',
         email: existingArtist.email,
-        profileImageUrl: existingArtist.profileImageUrl, // Keep original for form data
+        profileImageUrl: existingArtist.profileImageUrl, 
         dataAiHint: existingArtist.dataAiHint || '',
         instagram: existingArtist.socialMedia?.instagram || '',
         facebook: existingArtist.socialMedia?.facebook || '',
       });
-      if (existingArtist.profileImageUrl) { // Set preview for initial display
+      if (existingArtist.profileImageUrl) { 
           setProfileImagePreviewUrl(existingArtist.profileImageUrl);
       }
       setArtistArtworks(mockArtworks.filter(art => art.artistId === artistId));
@@ -232,14 +232,14 @@ export default function PanelArtistaPage() {
         toast({ title: "Error al leer archivo de perfil", description: "No se pudo procesar la imagen de perfil.", variant: "destructive" });
         setIsProfileImageProcessing(false);
         setProfileSelectedFile(null);
-        setProfileImagePreviewUrl(profileForm.profileImageUrl || ''); // Revert if error
+        setProfileImagePreviewUrl(profileForm.profileImageUrl || ''); 
         setProfileFileName(null);
       };
       reader.readAsDataURL(file);
     } else {
       toast({ title: "Archivo de perfil no válido", description: "Por favor, selecciona un archivo de imagen.", variant: "destructive" });
       setProfileSelectedFile(null);
-      setProfileImagePreviewUrl(profileForm.profileImageUrl || ''); // Revert
+      setProfileImagePreviewUrl(profileForm.profileImageUrl || ''); 
       setProfileFileName(null);
       setIsProfileImageProcessing(false);
     }
@@ -284,7 +284,7 @@ export default function PanelArtistaPage() {
     const existingArtistForCheck = mockArtists.find(a => a.id === currentArtistId);
 
     if (!finalProfileImageUrl && !(existingArtistForCheck && existingArtistForCheck.profileImageUrl)) {
-      finalProfileImageUrl = 'https://placehold.co/300x300.png'; // Default placeholder
+      finalProfileImageUrl = 'https://placehold.co/300x300.png'; 
     }
 
 
@@ -314,7 +314,7 @@ export default function PanelArtistaPage() {
           instagram: profileForm.instagram,
           facebook: profileForm.facebook,
         },
-        status: 'pending_approval', 
+        status: 'active', 
       };
       mockArtists.push(newArtist);
     }
