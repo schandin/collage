@@ -58,7 +58,7 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
   },
   {
     id: 'plan2',
-    name: 'Artista Profesional',
+    name: 'Avanzado',
     pricePerMonth: 10,
     photoLimit: 40,
     features: ['Hasta 40 obras en galería', 'Panel de control avanzado', 'Prioridad en soporte', 'Promoción en newsletter']
@@ -71,4 +71,3 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     features: ['Obras ilimitadas', 'Panel de control completo', 'Soporte premium 24/7', 'Promoción destacada en portada y redes']
   }
 ];
-
