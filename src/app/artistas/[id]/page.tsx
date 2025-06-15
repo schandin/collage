@@ -2,21 +2,20 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation'; // Import useParams
+import { useParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import ArtworkFullscreenModal from '@/app/components/ArtworkFullscreenModal';
 import { mockArtists, mockArtworks } from '@/lib/mockData';
 import type { Artist as ArtistType, Artwork as ArtworkType } from '@/types';
 import Image from 'next/image';
-import { MapPin } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 
 export default function ArtistProfilePage() {
   const routeParams = useParams(); 
-  const artistId = typeof routeParams?.id === 'string' ? routeParams.id : null;
 
   const [artist, setArtist] = useState<ArtistType | null>(null);
   const [artistArtworks, setArtistArtworks] = useState<ArtworkType[]>([]);
@@ -25,34 +24,31 @@ export default function ArtistProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // If routeParams is null, it means parameters are not yet available.
-    // Keep loading and wait for routeParams to be populated.
     if (routeParams === null) {
       setIsLoading(true);
+      setArtist(null);
+      setArtistArtworks([]);
       return;
     }
 
-    // At this point, routeParams is available (it could be an empty object if 'id' is not found,
-    // or an object with 'id' if the route matches).
-    // artistId will be a string or null based on routeParams.id.
+    const currentArtistId = typeof routeParams.id === 'string' ? routeParams.id : null;
 
-    if (artistId) {
-      const foundArtist = mockArtists.find(a => a.id === artistId);
+    if (currentArtistId) {
+      const foundArtist = mockArtists.find(a => a.id === currentArtistId);
       if (foundArtist) {
         setArtist(foundArtist);
-        const artworks = mockArtworks.filter(art => art.artistId === artistId && art.status === 'approved');
+        const artworks = mockArtworks.filter(art => art.artistId === currentArtistId && art.status === 'approved');
         setArtistArtworks(artworks);
       } else {
         setArtist(null); 
         setArtistArtworks([]);
       }
     } else {
-        // artistId is null (e.g., routeParams.id was not a string, or routeParams is an empty object)
         setArtist(null); 
         setArtistArtworks([]);
     }
-    setIsLoading(false); // Finish loading as routeParams (and thus artistId) has been processed.
-  }, [routeParams, artistId]); // Depend on routeParams to re-run when it resolves, and artistId for changes in derived ID.
+    setIsLoading(false);
+  }, [routeParams]); 
 
   const handleOpenModal = (artwork: ArtworkType) => {
     setSelectedArtwork(artwork);
@@ -68,7 +64,8 @@ export default function ArtistProfilePage() {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow container mx-auto px-4 py-12 text-center">
+        <main className="flex-grow container mx-auto px-4 py-12 text-center flex flex-col items-center justify-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
           <p>Cargando perfil del artista...</p>
         </main>
         <Footer />

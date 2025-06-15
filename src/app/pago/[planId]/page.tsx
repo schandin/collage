@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/app/components/Header';
@@ -11,32 +11,45 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { mockSubscriptionPlans } from '@/lib/mockData';
 import type { SubscriptionPlan } from '@/types';
-import { CreditCard, CheckCircle, ArrowLeft } from 'lucide-react';
+import { CreditCard, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function PaymentPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const planId = typeof params.planId === 'string' ? params.planId : '';
   
-  const selectedPlan = mockSubscriptionPlans.find(p => p.id === planId);
+  const [isLoading, setIsLoading] = useState(true);
+  // undefined: not yet processed, null: processed but not found, SubscriptionPlan: found
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null | undefined>(undefined); 
 
   useEffect(() => {
-    if (!selectedPlan && planId) {
+    if (params === null) {
+      setIsLoading(true); // Params not yet loaded
+      setSelectedPlan(undefined); // Reset selected plan state
+      return;
+    }
+
+    const currentPlanId = typeof params.planId === 'string' ? params.planId : '';
+    const foundPlan = mockSubscriptionPlans.find(p => p.id === currentPlanId);
+
+    if (currentPlanId && !foundPlan) { // Plan ID was provided in URL, but plan not found in mockData
       toast({
         title: "Plan no encontrado",
         description: "El plan de suscripción seleccionado no es válido.",
         variant: "destructive",
       });
       router.push('/suscripciones');
+      // No need to set loading/plan state here as navigation will occur
+      return; 
     }
-  }, [selectedPlan, planId, router, toast]);
+    
+    setSelectedPlan(foundPlan || null); // Set to found plan, or null if currentPlanId was empty or no match
+    setIsLoading(false);
+
+  }, [params, router, toast]);
 
   const handlePaymentConfirmation = () => {
     localStorage.setItem('isArtistAuthenticated', 'true');
-    // For a new artist, generate a temporary ID.
-    // For an existing artist re-subscribing, this might need different logic.
-    // For this mock, we'll assume this flow is for new artists.
     const newArtistId = `newArtist-${Date.now()}`;
     localStorage.setItem('currentArtistId', newArtistId);
     
@@ -47,17 +60,38 @@ export default function PaymentPage() {
     router.push('/panel-artista');
   };
 
-  if (!selectedPlan) {
+  if (isLoading || selectedPlan === undefined) { 
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow flex items-center justify-center">
-          <p>Cargando plan o plan no encontrado...</p>
+        <main className="flex-grow flex items-center justify-center flex-col">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+          <p>Cargando detalles del plan...</p>
         </main>
         <Footer />
       </div>
     );
   }
+
+  if (!selectedPlan) { // Params loaded, plan lookup done, but no plan found (e.g. invalid planId in URL or planId was empty)
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex items-center justify-center flex-col">
+          <CardTitle className="text-2xl font-headline text-destructive mb-4">Plan no encontrado</CardTitle>
+          <p className="text-muted-foreground mb-6">El plan de suscripción que buscas no existe o no es válido.</p>
+          <Button asChild variant="outline">
+            <Link href="/suscripciones">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Volver a Planes
+            </Link>
+          </Button>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen">
