@@ -70,7 +70,7 @@ export default function SuscripcionesPage() {
             Nuestro equipo está listo para ayudarte. Contáctanos para más información sobre nuestros planes y cómo podemos ayudarte a crecer.
           </p>
           <Button variant="outline" className="border-accent text-accent hover:bg-accent hover:text-accent-foreground">
-            Contactar Soporte
+            Contactar soporte
           </Button>
         </section>
       </main>
@@ -78,3 +78,4 @@ export default function SuscripcionesPage() {
     </div>
   );
 }
+
