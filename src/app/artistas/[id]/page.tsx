@@ -15,18 +15,27 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 
 export default function ArtistProfilePage() {
-  const routeParams = useParams(); // Use the hook
-  // routeParams can be null initially, or an object like { id: "value" }
+  const routeParams = useParams(); 
   const artistId = typeof routeParams?.id === 'string' ? routeParams.id : null;
 
   const [artist, setArtist] = useState<ArtistType | null>(null);
   const [artistArtworks, setArtistArtworks] = useState<ArtworkType[]>([]);
   const [selectedArtwork, setSelectedArtwork] = useState<ArtworkType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // For initial loading state
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true); // Start loading when artistId changes or on initial mount
+    // If routeParams is null, it means parameters are not yet available.
+    // Keep loading and wait for routeParams to be populated.
+    if (routeParams === null) {
+      setIsLoading(true);
+      return;
+    }
+
+    // At this point, routeParams is available (it could be an empty object if 'id' is not found,
+    // or an object with 'id' if the route matches).
+    // artistId will be a string or null based on routeParams.id.
+
     if (artistId) {
       const foundArtist = mockArtists.find(a => a.id === artistId);
       if (foundArtist) {
@@ -38,12 +47,12 @@ export default function ArtistProfilePage() {
         setArtistArtworks([]);
       }
     } else {
-        // If artistId is null (e.g. params not ready or invalid route)
+        // artistId is null (e.g., routeParams.id was not a string, or routeParams is an empty object)
         setArtist(null); 
         setArtistArtworks([]);
     }
-    setIsLoading(false); // Finish loading
-  }, [artistId]);
+    setIsLoading(false); // Finish loading as routeParams (and thus artistId) has been processed.
+  }, [routeParams, artistId]); // Depend on routeParams to re-run when it resolves, and artistId for changes in derived ID.
 
   const handleOpenModal = (artwork: ArtworkType) => {
     setSelectedArtwork(artwork);
@@ -55,7 +64,7 @@ export default function ArtistProfilePage() {
     setSelectedArtwork(null);
   };
 
-  if (isLoading) { // Covers initial load and when artistId changes
+  if (isLoading) { 
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -67,7 +76,7 @@ export default function ArtistProfilePage() {
     );
   }
 
-  if (!artist) { // If not loading and artist is still null (means artistId was invalid or not found)
+  if (!artist) { 
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -83,13 +92,11 @@ export default function ArtistProfilePage() {
     );
   }
   
-  // If artist is found
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-          {/* Left Column: Artist Details & Artworks */}
           <div className="md:col-span-2 space-y-10">
             <section>
               <h1 className="text-4xl lg:text-5xl font-headline text-primary mb-2">{artist.name}</h1>
@@ -132,7 +139,7 @@ export default function ArtistProfilePage() {
               ) : (
                  <Card className="border-dashed border-2">
                     <CardContent className="p-10 text-center">
-                    <MapPin className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" /> {/* Re-using MapPin as generic placeholder */}
+                    <MapPin className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
                     <p className="text-muted-foreground">Este artista aún no ha publicado obras aprobadas.</p>
                     </CardContent>
                 </Card>
@@ -140,9 +147,8 @@ export default function ArtistProfilePage() {
             </section>
           </div>
 
-          {/* Right Column: Artist Profile Image */}
           <aside className="md:col-span-1">
-            <div className="sticky top-24"> {/* Sticky position for profile image card */}
+            <div className="sticky top-24">
               <Card className="shadow-xl overflow-hidden">
                 <CardHeader className="p-0">
                   <div className="aspect-square relative w-full">
@@ -171,4 +177,3 @@ export default function ArtistProfilePage() {
     </div>
   );
 }
-
