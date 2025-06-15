@@ -10,13 +10,17 @@ import Link from 'next/link';
 
 function PlanCard({ plan }: { plan: SubscriptionPlan }) {
   const getPlanDescription = (planName: string) => {
-    if (planName.toLowerCase() === 'básico') {
+    const lowerPlanName = planName.toLowerCase();
+    if (lowerPlanName === 'básico') {
       return "Ideal para comenzar";
     }
-    if (planName.toLowerCase().includes("profesional") || planName.toLowerCase().includes("avanzado") || planName.toLowerCase().includes("priority")) {
+    if (lowerPlanName === 'avanzado') {
         return "Ideal para profesionales";
     }
-    return `Ideal para ${planName.toLowerCase()}`;
+    if (lowerPlanName === 'priority') {
+        return "Exposición personalizada";
+    }
+    return `Ideal para ${lowerPlanName}`;
   }
 
   return (
@@ -88,3 +92,4 @@ export default function SuscripcionesPage() {
     </div>
   );
 }
+
