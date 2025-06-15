@@ -1,15 +1,17 @@
+
 "use client";
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, UserCircle } from 'lucide-react';
+import { LogIn, UserCircle, Eye, EyeOff } from 'lucide-react';
 
 // Mock credentials for artist
 const ARTIST_EMAIL = "artista@example.com";
@@ -20,13 +22,13 @@ export default function ArtistLoginPage() {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
 
-    // Replace with actual authentication logic
     if (email === ARTIST_EMAIL && password === ARTIST_PASSWORD) {
       toast({
         title: "Inicio de sesión exitoso",
@@ -47,7 +49,7 @@ export default function ArtistLoginPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-grow flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-12">
+      <main className="flex-grow flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-12 px-4">
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="text-center">
             <UserCircle className="w-16 h-16 mx-auto text-primary mb-4" />
@@ -70,15 +72,27 @@ export default function ArtistLoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="text-base"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="text-base pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  </Button>
+                </div>
               </div>
               {error && <p className="text-sm text-destructive text-center">{error}</p>}
               <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base">
@@ -87,9 +101,19 @@ export default function ArtistLoginPage() {
               </Button>
             </form>
           </CardContent>
+          <CardFooter className="flex flex-col items-center space-y-2 pt-4">
+            <Link href="#" className="text-xs text-muted-foreground hover:text-accent transition-colors">
+              ¿Perdiste tu contraseña?
+            </Link>
+            <Link href="#" className="text-xs text-muted-foreground hover:text-accent transition-colors">
+              ¿No recuerdas tu email?
+            </Link>
+          </CardFooter>
         </Card>
       </main>
       <Footer />
     </div>
   );
 }
+
+    
