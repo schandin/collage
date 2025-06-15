@@ -1,19 +1,39 @@
 
+"use client";
+
+import React, { useState } from 'react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
-import NewsletterForm from '@/app/components/NewsletterForm';
-import ArtworkCard from '@/app/components/ArtworkCard';
+import ArtworkFullscreenModal from '@/app/components/ArtworkFullscreenModal';
 import ArtistCard from '@/app/components/ArtistCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { mockArtworks, mockArtists } from '@/lib/mockData';
-import { Search, ChevronRight, Palette, Users } from 'lucide-react'; // Palette still needed for other sections if any, removed ChevronLeft as it's not used
+import type { Artist as ArtistType, Artwork as ArtworkType } from '@/types';
+import { Search, ChevronRight, Palette, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Home() {
-  const featuredArtworks = mockArtworks.filter(art => art.status === 'approved').slice(0, 5);
   const featuredArtists = mockArtists.filter(art => art.status === 'active').slice(0, 4);
+  // Removed featuredArtworks direct usage here, will be filtered per artist
+
+  const [selectedArtworkForModal, setSelectedArtworkForModal] = useState<ArtworkType | null>(null);
+  const [selectedArtistForModal, setSelectedArtistForModal] = useState<ArtistType | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = (artwork: ArtworkType) => {
+    setSelectedArtworkForModal(artwork);
+    const artist = mockArtists.find(a => a.id === artwork.artistId);
+    setSelectedArtistForModal(artist || null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedArtworkForModal(null);
+    setSelectedArtistForModal(null);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -42,39 +62,63 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Obras Destacadas Section */}
+        {/* Galerías Destacadas de Nuestros Artistas Section */}
         <section className="py-16 bg-card">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-10">
-              <h2 className="text-4xl font-headline text-primary"> {/* Removed Palette Icon */}
-                Obras Destacadas
-              </h2>
-              <Button variant="default" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-2 text-sm">
-                <Link href="/obras">
-                  <span className="flex items-center">
-                    Ver Todas <ChevronRight className="w-4 h-4 ml-1" />
-                  </span>
-                </Link>
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {featuredArtworks.slice(0,4).map((artwork) => (
-                <ArtworkCard key={artwork.id} artwork={artwork} />
-              ))}
-            </div>
-             {/* Simple horizontal scroll for more artworks */}
-            {featuredArtworks.length > 4 && (
-              <div className="mt-10">
-                <h3 className="text-2xl font-headline text-primary mb-4">Más para explorar</h3>
-                <div className="flex overflow-x-auto space-x-6 pb-4 scrollbar-thin scrollbar-thumb-primary/50 scrollbar-track-primary/10">
-                  {featuredArtworks.slice(4).map((artwork) => (
-                    <div key={artwork.id} className="min-w-[280px] md:min-w-[320px]">
-                      <ArtworkCard artwork={artwork} />
+            <h2 className="text-4xl font-headline text-primary mb-12 text-center">
+              Galerías Destacadas de Nuestros Artistas
+            </h2>
+            <div className="space-y-12">
+              {featuredArtists.map((artist) => {
+                const artistArtworks = mockArtworks.filter(
+                  (art) => art.artistId === artist.id && art.status === 'approved'
+                ).slice(0, 10);
+
+                if (artistArtworks.length === 0 && artist.status !== 'active') return null; 
+
+                return (
+                  <div key={artist.id}>
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-3">
+                      <h3 className="text-3xl font-headline text-primary">{artist.name}</h3>
+                      <Button variant="outline" asChild className="border-accent text-accent hover:bg-accent hover:text-accent-foreground self-start sm:self-center">
+                        <Link href={`/artistas/${artist.id}`}>
+                          Ver Perfil Completo <ChevronRight className="w-4 h-4 ml-1" />
+                        </Link>
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                    {artistArtworks.length > 0 ? (
+                      <div className="flex overflow-x-auto space-x-4 pb-4 -mx-1 px-1 scrollbar-thin scrollbar-thumb-accent/70 scrollbar-track-accent/20 rounded-lg">
+                        {artistArtworks.map((artwork) => (
+                          <button
+                            key={artwork.id}
+                            onClick={() => handleOpenModal(artwork)}
+                            className="aspect-square relative block w-48 h-48 md:w-56 md:h-56 flex-shrink-0 overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 group"
+                            aria-label={`Ver obra ${artwork.title}`}
+                          >
+                            <Image
+                              src={artwork.imageUrl}
+                              alt={artwork.title}
+                              layout="fill"
+                              objectFit="cover"
+                              className="transition-transform duration-500 ease-in-out group-hover:scale-110"
+                              data-ai-hint={artwork.dataAiHint || "artist artwork"}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                              <p className="text-white text-sm font-semibold truncate">{artwork.title}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 px-4 border-2 border-dashed border-muted-foreground/30 rounded-lg">
+                          <Palette className="w-10 h-10 text-muted-foreground/50 mx-auto mb-2" />
+                          <p className="text-muted-foreground text-sm">Este artista aún no tiene obras públicas para mostrar aquí.</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
@@ -105,7 +149,7 @@ export default function Home() {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {featuredArtists.map((artist) => (
+              {featuredArtists.map((artist) => ( // Re-using featuredArtists for this section, which is fine.
                 <ArtistCard key={artist.id} artist={artist} />
               ))}
             </div>
@@ -124,9 +168,14 @@ export default function Home() {
             </Button>
           </div>
         </section>
-
       </main>
       <Footer />
+      <ArtworkFullscreenModal
+        artwork={selectedArtworkForModal}
+        artistEmail={selectedArtistForModal?.email}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }
