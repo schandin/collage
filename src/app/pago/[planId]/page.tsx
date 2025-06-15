@@ -23,7 +23,6 @@ export default function PaymentPage() {
 
   useEffect(() => {
     if (!selectedPlan && planId) {
-      // Handle case where planId is present but not found, redirect or show error
       toast({
         title: "Plan no encontrado",
         description: "El plan de suscripción seleccionado no es válido.",
@@ -34,8 +33,13 @@ export default function PaymentPage() {
   }, [selectedPlan, planId, router, toast]);
 
   const handlePaymentConfirmation = () => {
-    // Simulate successful payment
     localStorage.setItem('isArtistAuthenticated', 'true');
+    // For a new artist, generate a temporary ID.
+    // For an existing artist re-subscribing, this might need different logic.
+    // For this mock, we'll assume this flow is for new artists.
+    const newArtistId = `newArtist-${Date.now()}`;
+    localStorage.setItem('currentArtistId', newArtistId);
+    
     toast({
       title: "¡Pago Confirmado!",
       description: "Tu suscripción ha sido activada. Redirigiendo al panel de artista...",
@@ -75,7 +79,7 @@ export default function PaymentPage() {
             <CardContent className="space-y-6">
               <div className="p-6 bg-muted/30 rounded-lg">
                 <h3 className="text-xl font-semibold text-primary mb-3">Detalles del Plan: {selectedPlan.name}</h3>
-                <p className="text-3xl font-bold text-accent mb-2">${selectedPlan.pricePerMonth} <span className="text-sm text-muted-foreground">/mes</span></p>
+                <p className="text-3xl font-bold text-accent">${selectedPlan.pricePerMonth} <span className="text-sm text-muted-foreground">/mes</span></p>
                 <ul className="space-y-1 text-sm text-muted-foreground">
                   {selectedPlan.features.map((feature, index) => (
                     <li key={index} className="flex items-center">

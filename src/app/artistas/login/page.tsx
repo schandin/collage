@@ -16,6 +16,7 @@ import { LogIn, UserCircle, Eye, EyeOff, UserPlus } from 'lucide-react';
 // Mock credentials for artist
 const ARTIST_EMAIL = "artista@example.com";
 const ARTIST_PASSWORD = "password123";
+const EXISTING_ARTIST_ID = "artist1"; // ID for the mock artist Elena Rodriguez
 
 export default function ArtistLoginPage() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function ArtistLoginPage() {
         description: "Redirigiendo a tu panel de artista...",
       });
       localStorage.setItem('isArtistAuthenticated', 'true');
+      localStorage.setItem('currentArtistId', EXISTING_ARTIST_ID); // Set specific artist ID
       router.push('/panel-artista');
     } else {
       setError('Email o contraseña incorrectos.');
@@ -112,7 +114,7 @@ export default function ArtistLoginPage() {
                 </Link>
             </div>
             <Button variant="outline" asChild className="w-full mt-4">
-              <Link href="/suscripciones"> {/* Cambiado de /artistas/registro a /suscripciones */}
+              <Link href="/suscripciones">
                 <UserPlus className="w-4 h-4 mr-2" />
                 Inscribirse como nuevo artista
               </Link>
