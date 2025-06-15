@@ -3,23 +3,31 @@
 
 import type { Artwork } from '@/types';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { DollarSign } from 'lucide-react';
 
 interface ArtworkFullscreenModalProps {
   artwork: Artwork | null;
+  artistEmail?: string; // Added artist's email
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function ArtworkFullscreenModal({ artwork, isOpen, onClose }: ArtworkFullscreenModalProps) {
+export default function ArtworkFullscreenModal({ artwork, artistEmail, isOpen, onClose }: ArtworkFullscreenModalProps) {
   if (!artwork) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl md:max-w-4xl lg:max-w-5xl w-[90vw] h-[90vh] flex flex-col p-4 sm:p-6">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-2xl lg:text-3xl font-headline text-primary">{artwork.title}</DialogTitle>
+          <DialogTitle className="text-2xl lg:text-3xl font-headline text-primary">
+            {artwork.artistName}: {artwork.title}
+          </DialogTitle>
+          {artistEmail && (
+            <DialogDescription className="text-sm text-muted-foreground pt-1">
+              Para comprar, contácteme: <a href={`mailto:${artistEmail}`} className="text-accent hover:underline">{artistEmail}</a>
+            </DialogDescription>
+          )}
         </DialogHeader>
         <div className="relative flex-grow my-4 overflow-hidden">
           <Image

@@ -162,7 +162,12 @@ export default function ArtistProfilePage() {
         </div>
       </main>
       <Footer />
-      <ArtworkFullscreenModal artwork={selectedArtwork} isOpen={isModalOpen} onClose={handleCloseModal} />
+      <ArtworkFullscreenModal 
+        artwork={selectedArtwork} 
+        artistEmail={artist?.email} 
+        isOpen={isModalOpen} 
+        onClose={handleCloseModal} 
+      />
     </div>
   );
 }
