@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation'; // Import useParams
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import ArtworkFullscreenModal from '@/app/components/ArtworkFullscreenModal';
@@ -13,29 +14,36 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 
-// We keep generateStaticParams for SSG if preferred, but page is client-rendered for modal.
-// If this causes issues due to "use client", it can be removed, and Next.js will handle dynamic routes.
-// For now, assuming it works for param generation, and client-side rendering takes over for interactivity.
-// export async function generateStaticParams() {
-//   return mockArtists.map((artist) => ({
-//     id: artist.id,
-//   }));
-// }
+export default function ArtistProfilePage() {
+  const routeParams = useParams(); // Use the hook
+  // routeParams can be null initially, or an object like { id: "value" }
+  const artistId = typeof routeParams?.id === 'string' ? routeParams.id : null;
 
-export default function ArtistProfilePage({ params }: { params: { id: string } }) {
   const [artist, setArtist] = useState<ArtistType | null>(null);
   const [artistArtworks, setArtistArtworks] = useState<ArtworkType[]>([]);
   const [selectedArtwork, setSelectedArtwork] = useState<ArtworkType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // For initial loading state
 
   useEffect(() => {
-    const foundArtist = mockArtists.find(a => a.id === params.id);
-    if (foundArtist) {
-      setArtist(foundArtist);
-      const artworks = mockArtworks.filter(art => art.artistId === params.id && art.status === 'approved');
-      setArtistArtworks(artworks);
+    setIsLoading(true); // Start loading when artistId changes or on initial mount
+    if (artistId) {
+      const foundArtist = mockArtists.find(a => a.id === artistId);
+      if (foundArtist) {
+        setArtist(foundArtist);
+        const artworks = mockArtworks.filter(art => art.artistId === artistId && art.status === 'approved');
+        setArtistArtworks(artworks);
+      } else {
+        setArtist(null); 
+        setArtistArtworks([]);
+      }
+    } else {
+        // If artistId is null (e.g. params not ready or invalid route)
+        setArtist(null); 
+        setArtistArtworks([]);
     }
-  }, [params.id]);
+    setIsLoading(false); // Finish loading
+  }, [artistId]);
 
   const handleOpenModal = (artwork: ArtworkType) => {
     setSelectedArtwork(artwork);
@@ -47,7 +55,19 @@ export default function ArtistProfilePage({ params }: { params: { id: string } }
     setSelectedArtwork(null);
   };
 
-  if (!artist) {
+  if (isLoading) { // Covers initial load and when artistId changes
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-12 text-center">
+          <p>Cargando perfil del artista...</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!artist) { // If not loading and artist is still null (means artistId was invalid or not found)
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -62,7 +82,8 @@ export default function ArtistProfilePage({ params }: { params: { id: string } }
       </div>
     );
   }
-
+  
+  // If artist is found
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -135,12 +156,6 @@ export default function ArtistProfilePage({ params }: { params: { id: string } }
                     />
                   </div>
                 </CardHeader>
-                {/* Content for under the image if needed, e.g., a button */}
-                {/* Example:
-                <CardContent className="p-4 text-center">
-                  <Button variant="outline" className="w-full">Ver Exposición Actual</Button>
-                </CardContent>
-                */}
               </Card>
             </div>
           </aside>
@@ -151,3 +166,4 @@ export default function ArtistProfilePage({ params }: { params: { id: string } }
     </div>
   );
 }
+
