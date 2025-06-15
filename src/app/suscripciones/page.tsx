@@ -18,7 +18,7 @@ function PlanCard({ plan }: { plan: SubscriptionPlan }) {
         return "Ideal para profesionales";
     }
     if (lowerPlanName === 'priority') {
-        return "Exposición personalizada";
+        return "Manejo de redes";
     }
     return `Ideal para ${lowerPlanName}`;
   }
@@ -92,4 +92,3 @@ export default function SuscripcionesPage() {
     </div>
   );
 }
-
