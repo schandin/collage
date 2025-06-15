@@ -46,11 +46,17 @@ export default function PanelArtistaPage() {
     country: '',
     bio: '',
     email: '',
-    profileImageUrl: '',
+    profileImageUrl: '', // Will store Data URL or original URL
     dataAiHint: '', 
     instagram: '',
     facebook: '',
   });
+  
+  const [profileSelectedFile, setProfileSelectedFile] = useState<File | null>(null);
+  const [profileImagePreviewUrl, setProfileImagePreviewUrl] = useState<string | null>(null);
+  const [profileFileName, setProfileFileName] = useState<string | null>(null);
+  const [isProfileImageProcessing, setIsProfileImageProcessing] = useState(false);
+
 
   useEffect(() => {
     const authStatus = localStorage.getItem('isArtistAuthenticated');
@@ -81,20 +87,21 @@ export default function PanelArtistaPage() {
         country: existingArtist.country,
         bio: existingArtist.bio || '',
         email: existingArtist.email,
-        profileImageUrl: existingArtist.profileImageUrl,
+        profileImageUrl: existingArtist.profileImageUrl, // Keep original for form data
         dataAiHint: existingArtist.dataAiHint || '',
         instagram: existingArtist.socialMedia?.instagram || '',
         facebook: existingArtist.socialMedia?.facebook || '',
       });
+      if (existingArtist.profileImageUrl) { // Set preview for initial display
+          setProfileImagePreviewUrl(existingArtist.profileImageUrl);
+      }
       setArtistArtworks(mockArtworks.filter(art => art.artistId === artistId));
     } else if (artistId.startsWith('newArtist-')) {
-       // For a new artist not yet in mockData, initialize with empty artworks
-       // and potentially default profile form values if desired, or leave as is
        setArtistArtworks([]);
     }
     
     setIsLoading(false);
-  }, [router]);
+  }, [router, toast]);
 
   const resetArtworkForm = () => {
     setArtworkForm({ title: '', description: '', imageUrl: '', price: '', dataAiHint: '' });
@@ -110,27 +117,24 @@ export default function PanelArtistaPage() {
     setArtworkForm({
       title: artwork.title,
       description: artwork.description || '',
-      imageUrl: artwork.imageUrl, // Keep original image URL for editing context
+      imageUrl: artwork.imageUrl, 
       price: artwork.price?.toString() || '',
       dataAiHint: artwork.dataAiHint || '',
     });
-    setSelectedFile(null); // Reset file selection
-    setImagePreviewUrl(null); // Reset preview if a new file isn't selected
+    setSelectedFile(null); 
+    setImagePreviewUrl(null); 
     setFileName(null);
     setIsImageProcessing(false);
-    // Programmatically switch to the 'subir-obra' tab
     const tabTrigger = document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"]');
     tabTrigger?.click();
   };
 
   const handleDeleteArtwork = (artworkId: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar esta obra?")) {
-      // Remove from global mockArtworks
       const artworkIndex = mockArtworks.findIndex(art => art.id === artworkId);
       if (artworkIndex > -1) {
         mockArtworks.splice(artworkIndex, 1);
       }
-      // Update local state
       setArtistArtworks(current => current.filter(art => art.id !== artworkId));
       toast({ title: "Obra eliminada" });
     }
@@ -152,8 +156,8 @@ export default function PanelArtistaPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
-        setImagePreviewUrl(dataUrl); // For preview
-        setArtworkForm(prev => ({ ...prev, imageUrl: dataUrl })); // Store Data URL in form
+        setImagePreviewUrl(dataUrl); 
+        setArtworkForm(prev => ({ ...prev, imageUrl: dataUrl })); 
         setIsImageProcessing(false);
       };
       reader.onerror = () => {
@@ -162,7 +166,6 @@ export default function PanelArtistaPage() {
         setSelectedFile(null);
         setImagePreviewUrl(null);
         setFileName(null);
-        // If editing, revert to original image URL, otherwise clear it
         setArtworkForm(prev => ({...prev, imageUrl: editingArtwork ? editingArtwork.imageUrl : ''}));
       };
       reader.readAsDataURL(file);
@@ -205,9 +208,7 @@ export default function PanelArtistaPage() {
     setSelectedFile(null);
     setImagePreviewUrl(null);
     setFileName(null);
-    setIsImageProcessing(false); // Ensure processing is false
-    // If editing, artworkForm.imageUrl should revert to the original artwork's image.
-    // If creating new, it should be empty.
+    setIsImageProcessing(false); 
     if (editingArtwork) {
       setArtworkForm(prev => ({...prev, imageUrl: editingArtwork.imageUrl}));
     } else {
@@ -215,38 +216,105 @@ export default function PanelArtistaPage() {
     }
   };
 
+  const processProfileFile = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
+      setIsProfileImageProcessing(true);
+      setProfileSelectedFile(file);
+      setProfileFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setProfileImagePreviewUrl(dataUrl); 
+        setProfileForm(prev => ({ ...prev, profileImageUrl: dataUrl }));
+        setIsProfileImageProcessing(false);
+      };
+      reader.onerror = () => {
+        toast({ title: "Error al leer archivo de perfil", description: "No se pudo procesar la imagen de perfil.", variant: "destructive" });
+        setIsProfileImageProcessing(false);
+        setProfileSelectedFile(null);
+        setProfileImagePreviewUrl(profileForm.profileImageUrl || ''); // Revert if error
+        setProfileFileName(null);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      toast({ title: "Archivo de perfil no válido", description: "Por favor, selecciona un archivo de imagen.", variant: "destructive" });
+      setProfileSelectedFile(null);
+      setProfileImagePreviewUrl(profileForm.profileImageUrl || ''); // Revert
+      setProfileFileName(null);
+      setIsProfileImageProcessing(false);
+    }
+  };
+
+  const handleProfileFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processProfileFile(file);
+    }
+  };
+
+  const handleProfileDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleProfileDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      processProfileFile(file);
+    }
+  };
+  
+  const handleRemoveProfileImage = () => {
+    setProfileSelectedFile(null);
+    setProfileImagePreviewUrl(null); 
+    setProfileFileName(null);
+    setIsProfileImageProcessing(false);
+    setProfileForm(prev => ({ ...prev, profileImageUrl: '' })); 
+  };
+
 
   const handleProfileSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!currentArtistId) return;
+    if (!currentArtistId || isProfileImageProcessing) return;
+
+    let finalProfileImageUrl = profileForm.profileImageUrl;
+    const existingArtistForCheck = mockArtists.find(a => a.id === currentArtistId);
+
+    if (!finalProfileImageUrl && !(existingArtistForCheck && existingArtistForCheck.profileImageUrl)) {
+      finalProfileImageUrl = 'https://placehold.co/300x300.png'; // Default placeholder
+    }
+
 
     let existingArtist = mockArtists.find(a => a.id === currentArtistId);
-    if (existingArtist) { // Update existing artist
+    if (existingArtist) { 
       existingArtist.name = profileForm.name;
       existingArtist.country = profileForm.country;
       existingArtist.bio = profileForm.bio;
       existingArtist.email = profileForm.email;
-      existingArtist.profileImageUrl = profileForm.profileImageUrl;
+      existingArtist.profileImageUrl = finalProfileImageUrl;
       existingArtist.dataAiHint = profileForm.dataAiHint;
       existingArtist.socialMedia = {
         instagram: profileForm.instagram,
         facebook: profileForm.facebook,
       };
-    } else { // Create new artist if ID is 'newArtist-...' and not found
+    } else { 
       const newArtist: Artist = {
         id: currentArtistId,
         name: profileForm.name,
         country: profileForm.country,
-        profileImageUrl: profileForm.profileImageUrl || 'https://placehold.co/300x300.png',
+        profileImageUrl: finalProfileImageUrl,
         dataAiHint: profileForm.dataAiHint,
         email: profileForm.email,
         bio: profileForm.bio,
-        artworks: [], // New artist starts with no artworks
+        artworks: [], 
         socialMedia: {
           instagram: profileForm.instagram,
           facebook: profileForm.facebook,
         },
-        status: 'pending_approval', // New artists need approval
+        status: 'pending_approval', 
       };
       mockArtists.push(newArtist);
     }
@@ -261,10 +329,7 @@ export default function PanelArtistaPage() {
       toast({ title: "Título requerido", description: "Por favor, asigna un título a tu obra.", variant: "destructive" });
       return;
     }
-
-    // Image is required for new artworks. For editing, if no new image is selected, the existing one is used.
-    // artworkForm.imageUrl will hold the Data URL if a new image was processed, 
-    // or the original URL if editing and no new image was selected, or empty if new and no image.
+    
     if (!artworkForm.imageUrl && !editingArtwork) {
       toast({ title: "Imagen requerida", description: "Por favor, sube una imagen para la obra.", variant: "destructive" });
       return;
@@ -280,48 +345,41 @@ export default function PanelArtistaPage() {
         return;
     }
 
-    // Determine the final image URL
-    // If editing and no new image was uploaded (artworkForm.imageUrl is original or empty after removal attempt),
-    // and selectedFile is null, it means we should stick to editingArtwork.imageUrl.
-    // If a new file was selected, artworkForm.imageUrl has the Data URL.
-    // If creating new, artworkForm.imageUrl must have the Data URL.
     const finalImageUrl = artworkForm.imageUrl || (editingArtwork ? editingArtwork.imageUrl : '');
-     if (!finalImageUrl) { // Should not happen if previous checks are correct, but as a safeguard
+     if (!finalImageUrl) { 
       toast({ title: "Error de imagen", description: "No se pudo determinar la imagen de la obra.", variant: "destructive" });
       return;
     }
 
-
-    if (editingArtwork) { // Editing existing artwork
+    if (editingArtwork) { 
       const index = mockArtworks.findIndex(art => art.id === editingArtwork.id);
       if (index > -1) {
         const originalStatus = mockArtworks[index].status;
-        const imageChanged = artworkForm.imageUrl !== editingArtwork.imageUrl && selectedFile; // Image changed only if a new file was processed
+        const imageChanged = artworkForm.imageUrl !== editingArtwork.imageUrl && selectedFile; 
 
         mockArtworks[index] = {
           ...mockArtworks[index],
           title: artworkForm.title,
           description: artworkForm.description,
-          imageUrl: finalImageUrl, // Use the determined final image URL
+          imageUrl: finalImageUrl, 
           price: parseFloat(artworkForm.price) || undefined,
           dataAiHint: artworkForm.dataAiHint,
-          // If an approved artwork's image is changed, it goes back to pending. Otherwise, status remains.
           status: (originalStatus === 'approved' && imageChanged) ? 'pending' : originalStatus,
         };
         setArtistArtworks(prev => prev.map(art => art.id === editingArtwork.id ? mockArtworks[index] : art));
         toast({ title: "Obra actualizada", description: imageChanged && originalStatus === 'approved' ? "Cambios guardados. La obra requerirá nueva aprobación por cambio de imagen." : "Cambios guardados." });
       }
-    } else { // Creating new artwork
+    } else { 
       const newArtwork: Artwork = {
         id: `art-${Date.now()}`,
         title: artworkForm.title,
-        imageUrl: finalImageUrl, // This must be the Data URL from a newly uploaded image
+        imageUrl: finalImageUrl, 
         artistId: currentArtistId,
-        artistName: artistProfile.name, // Safe to access .name due to check above
+        artistName: artistProfile.name, 
         price: parseFloat(artworkForm.price) || undefined,
         description: artworkForm.description,
         uploadDate: new Date().toISOString().split('T')[0],
-        status: 'pending', // New artworks are pending approval
+        status: 'pending', 
         dataAiHint: artworkForm.dataAiHint,
       };
       mockArtworks.push(newArtwork);
@@ -343,15 +401,12 @@ export default function PanelArtistaPage() {
   }
 
   if (!isAuthenticated) {
-    // This should not be reached if useEffect redirects, but as a fallback
     return null; 
   }
   
-  // Determine the image to show in preview:
-  // 1. If imagePreviewUrl (from new file upload) exists, use it.
-  // 2. Else, if editingArtwork and its artworkForm.imageUrl (which might be original or newly set) exists, use it.
-  // 3. Else, null.
   const currentImageToPreview = imagePreviewUrl || (editingArtwork && artworkForm.imageUrl && !selectedFile ? artworkForm.imageUrl : null);
+  const currentProfileImageToPreview = profileImagePreviewUrl || (profileForm.profileImageUrl && !profileSelectedFile ? profileForm.profileImageUrl : null);
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -507,7 +562,7 @@ export default function PanelArtistaPage() {
                   <Button 
                     type="submit" 
                     className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    disabled={isImageProcessing || (!artworkForm.imageUrl && !editingArtwork)} // Also disable if no image for new artwork
+                    disabled={isImageProcessing || (!artworkForm.imageUrl && !editingArtwork)} 
                   >
                     {isImageProcessing ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -530,12 +585,50 @@ export default function PanelArtistaPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
-                    <Label htmlFor="artist-profileImageUrl" className="text-base">URL Foto de Perfil</Label>
-                    <Input id="artist-profileImageUrl" placeholder="https://placehold.co/300x300.png" value={profileForm.profileImageUrl} onChange={handleProfileFormChange} className="mt-1 text-base" />
-                     {profileForm.profileImageUrl && (
-                        <div className="mt-2 w-32 h-32 relative border rounded">
-                        <Image src={profileForm.profileImageUrl} alt="Preview" layout="fill" objectFit="cover" className="rounded" data-ai-hint={profileForm.dataAiHint || "artist portrait"}/>
+                    <Label htmlFor="artist-profile-file-upload" className="text-base mb-2 block">Foto de Perfil</Label>
+                    <div 
+                      className="mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md hover:border-primary transition-colors"
+                      onDragOver={handleProfileDragOver}
+                      onDrop={handleProfileDrop}
+                    >
+                      <div className="space-y-1 text-center">
+                        {!currentProfileImageToPreview && !isProfileImageProcessing && <UserCircle className="mx-auto h-12 w-12 text-muted-foreground" />}
+                        {isProfileImageProcessing && <Loader2 className="mx-auto h-12 w-12 text-muted-foreground animate-spin" />}
+                        <div className="flex text-sm text-muted-foreground justify-center">
+                          <Label htmlFor="artist-profile-file-input" className={`relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary ${isProfileImageProcessing ? 'pointer-events-none opacity-50' : ''}`}>
+                            <span>{currentProfileImageToPreview ? 'Cambiar foto de perfil' : (isProfileImageProcessing ? 'Procesando...' : 'Sube un archivo')}</span>
+                            <input id="artist-profile-file-input" name="artist-profile-file-input" type="file" className="sr-only" accept="image/*" onChange={handleProfileFileChange} disabled={isProfileImageProcessing} />
+                          </Label>
+                          {!currentProfileImageToPreview && !isProfileImageProcessing && <p className="pl-1">o arrastra y suelta</p>}
                         </div>
+                        {!currentProfileImageToPreview && !isProfileImageProcessing && <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WEBP</p>}
+                         {profileFileName && !currentProfileImageToPreview && !isProfileImageProcessing && <p className="text-sm text-foreground pt-2">Archivo: {profileFileName}</p>}
+                      </div>
+                    </div>
+
+                    {currentProfileImageToPreview && (
+                      <div className="mt-4 relative w-32 h-32 border rounded-md overflow-hidden mx-auto group">
+                        <Image
+                          src={currentProfileImageToPreview}
+                          alt="Previsualización foto de perfil"
+                          layout="fill"
+                          objectFit="cover"
+                          className="rounded"
+                          data-ai-hint={profileForm.dataAiHint || "artist portrait preview"}
+                        />
+                        <Button 
+                            type="button" 
+                            variant="destructive" 
+                            size="icon" 
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+                            onClick={handleRemoveProfileImage}
+                            aria-label="Eliminar foto de perfil"
+                            disabled={isProfileImageProcessing}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                         {profileFileName && <p className="text-xs text-center text-muted-foreground pt-1 truncate w-full px-1" title={profileFileName}>{profileFileName}</p>}
+                      </div>
                     )}
                   </div>
                   <div>
@@ -568,8 +661,9 @@ export default function PanelArtistaPage() {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" className="ml-auto bg-accent text-accent-foreground hover:bg-accent/90">
-                    <Save className="w-4 h-4 mr-2" /> Guardar Cambios
+                  <Button type="submit" className="ml-auto bg-accent text-accent-foreground hover:bg-accent/90" disabled={isProfileImageProcessing}>
+                    {isProfileImageProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                     Guardar Cambios
                   </Button>
                 </CardFooter>
               </form>
@@ -581,5 +675,4 @@ export default function PanelArtistaPage() {
     </div>
   );
 }
-
     
