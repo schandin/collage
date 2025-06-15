@@ -51,7 +51,7 @@ export const mockArtists: Artist[] = [
 export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'plan1',
-    name: 'Artista Emergente',
+    name: 'Básico',
     pricePerMonth: 5,
     photoLimit: 20,
     features: ['Hasta 20 obras en galería', 'Panel de control básico', 'Soporte por email']
