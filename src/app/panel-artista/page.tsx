@@ -1,6 +1,7 @@
 "use client"; 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadCloud, Edit3, UserCircle, Palette, DollarSign, Trash2, Eye, Save } from 'lucide-react';
+import { UploadCloud, Edit3, UserCircle, Scissors, DollarSign, Trash2, Eye, Save, Loader2 } from 'lucide-react'; // Changed Palette to Scissors, Added Loader2
 import Image from 'next/image';
 import type { Artwork } from '@/types';
 import { mockArtworks } from '@/lib/mockData'; // Using existing mock artworks for artist panel
@@ -19,8 +20,22 @@ const artistOwnedArtworks = mockArtworks.filter(art => art.artistId === 'artist1
 
 
 export default function PanelArtistaPage() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [artworks, setArtworks] = useState<Artwork[]>(artistOwnedArtworks);
   const [editingArtwork, setEditingArtwork] = useState<Artwork | null>(null);
+
+  useEffect(() => {
+    const authStatus = localStorage.getItem('isArtistAuthenticated');
+    if (authStatus !== 'true') {
+      router.push('/artistas/login');
+    } else {
+      setIsAuthenticated(true);
+    }
+    setIsLoading(false);
+  }, [router]);
+
 
   const handleEdit = (artwork: Artwork) => {
     setEditingArtwork(artwork);
@@ -28,7 +43,10 @@ export default function PanelArtistaPage() {
     // For this example, we'll switch to the "Subir/Editar Obra" tab and prefill.
     // This requires more complex state management, so for now, just log.
     console.log("Editing artwork:", artwork.title);
-    alert(`Editando: ${artwork.title}. Funcionalidad de edición detallada por implementar.`);
+    // Programmatically switch tab
+    const tabTrigger = document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"]');
+    tabTrigger?.click();
+    // alert(`Editando: ${artwork.title}. Funcionalidad de edición detallada por implementar.`);
   };
 
   const handleDelete = (artworkId: string) => {
@@ -47,16 +65,40 @@ export default function PanelArtistaPage() {
       alert(`Imagen ${file.name} seleccionada. Funcionalidad de subida por implementar.`);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center">
+        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    // This path should ideally not be reached if redirection works properly
+    // but serves as a fallback.
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center">
+        <p>Redirigiendo a inicio de sesión...</p>
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-12">
-        <h1 className="text-4xl font-headline text-primary mb-8">Panel de Artista</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-headline text-primary">Panel de Artista</h1>
+          <Button variant="outline" onClick={() => { localStorage.removeItem('isArtistAuthenticated'); router.push('/');}}>
+            Cerrar Sesión
+          </Button>
+        </div>
 
         <Tabs defaultValue="mis-obras" className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-2 mb-6">
-            <TabsTrigger value="mis-obras" className="py-3"><Palette className="w-5 h-5 mr-2" />Mis Obras</TabsTrigger>
+            <TabsTrigger value="mis-obras" className="py-3"><Scissors className="w-5 h-5 mr-2" />Mis Obras</TabsTrigger> {/* Changed Palette to Scissors */}
             <TabsTrigger value="subir-obra" className="py-3"><UploadCloud className="w-5 h-5 mr-2" />Subir/Editar Obra</TabsTrigger>
             <TabsTrigger value="mi-perfil" className="py-3"><UserCircle className="w-5 h-5 mr-2" />Mi Perfil</TabsTrigger>
           </TabsList>

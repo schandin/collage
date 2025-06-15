@@ -1,6 +1,6 @@
 "use client";
 import Link from 'next/link';
-import { Leaf, Palette, UserCircle, ShieldCheck, Briefcase, Menu, X } from 'lucide-react';
+import { Scissors, Palette, UserCircle, ShieldCheck, Briefcase, Menu, X } from 'lucide-react'; // Changed Leaf to Scissors
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import React, { useState } from 'react';
@@ -20,7 +20,7 @@ export default function Header() {
     <header className="bg-card shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-2xl font-headline text-primary hover:text-primary/80 transition-colors">
-          <Leaf className="w-8 h-8 text-accent" />
+          <Scissors className="w-8 h-8 text-accent" /> {/* Changed Leaf to Scissors */}
           Collage Conexión
         </Link>
 
@@ -48,7 +48,7 @@ export default function Header() {
             <SheetContent side="right" className="w-[280px] bg-card p-4">
               <div className="flex justify-between items-center mb-6">
                  <Link href="/" className="flex items-center gap-2 text-xl font-headline text-primary" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Leaf className="w-7 h-7 text-accent" />
+                    <Scissors className="w-7 h-7 text-accent" /> {/* Changed Leaf to Scissors */}
                     Collage Conexión
                   </Link>
                 <SheetClose asChild>

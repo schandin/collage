@@ -1,3 +1,4 @@
+
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import NewsletterForm from '@/app/components/NewsletterForm';
@@ -6,7 +7,7 @@ import ArtistCard from '@/app/components/ArtistCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { mockArtworks, mockArtists } from '@/lib/mockData';
-import { Search, ChevronRight, ChevronLeft, Palette, Users } from 'lucide-react';
+import { Search, ChevronRight, Palette, Users } from 'lucide-react'; // Palette still needed for other sections if any, removed ChevronLeft as it's not used
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -45,12 +46,15 @@ export default function Home() {
         <section className="py-16 bg-card">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-10">
-              <h2 className="text-4xl font-headline text-primary flex items-center">
-                <Palette className="w-8 h-8 mr-3 text-accent" />
+              <h2 className="text-4xl font-headline text-primary"> {/* Removed Palette Icon */}
                 Obras Destacadas
               </h2>
-              <Button variant="link" asChild className="text-accent hover:text-accent/80">
-                <Link href="/obras">Ver Todas <ChevronRight className="w-4 h-4 ml-1" /></Link>
+              <Button variant="default" asChild className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-2 text-sm">
+                <Link href="/obras">
+                  <span className="flex items-center">
+                    Ver Todas <ChevronRight className="w-4 h-4 ml-1" />
+                  </span>
+                </Link>
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
@@ -93,7 +97,11 @@ export default function Home() {
                 Artistas Talentosos
               </h3>
               <Button variant="link" asChild className="text-accent hover:text-accent/80">
-                <Link href="/artistas">Ver Todos <ChevronRight className="w-4 h-4 ml-1" /></Link>
+                <Link href="/artistas">
+                  <span className="flex items-center">
+                    Ver Todos <ChevronRight className="w-4 h-4 ml-1" />
+                  </span>
+                </Link>
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
