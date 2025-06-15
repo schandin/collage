@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { LogIn, UserCircle, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserCircle, Eye, EyeOff, UserPlus } from 'lucide-react';
 
 // Mock credentials for artist
 const ARTIST_EMAIL = "artista@example.com";
@@ -101,13 +101,22 @@ export default function ArtistLoginPage() {
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex flex-col items-center space-y-2 pt-4">
-            <Link href="#" className="text-xs text-muted-foreground hover:text-accent transition-colors">
-              ¿Perdiste tu contraseña?
-            </Link>
-            <Link href="#" className="text-xs text-muted-foreground hover:text-accent transition-colors">
-              ¿No recuerdas tu email?
-            </Link>
+          <CardFooter className="flex flex-col items-center space-y-3 pt-6">
+            <div className="text-xs space-x-2">
+                <Link href="#" className="text-muted-foreground hover:text-accent transition-colors">
+                ¿Perdiste tu contraseña?
+                </Link>
+                <span className="text-muted-foreground">|</span>
+                <Link href="#" className="text-muted-foreground hover:text-accent transition-colors">
+                ¿No recuerdas tu email?
+                </Link>
+            </div>
+            <Button variant="outline" asChild className="w-full mt-4">
+              <Link href="/artistas/registro"> 
+                <UserPlus className="w-4 h-4 mr-2" />
+                Inscribirse como nuevo artista
+              </Link>
+            </Button>
           </CardFooter>
         </Card>
       </main>
@@ -115,5 +124,3 @@ export default function ArtistLoginPage() {
     </div>
   );
 }
-
-    
