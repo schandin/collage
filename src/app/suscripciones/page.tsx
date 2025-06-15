@@ -14,7 +14,7 @@ function PlanCard({ plan }: { plan: SubscriptionPlan }) {
       return "Ideal para comenzar";
     }
     if (planName.toLowerCase().includes("profesional") || planName.toLowerCase().includes("avanzado") || planName.toLowerCase().includes("priority")) {
-        return "Recomendado";
+        return "Ideal para profesionales";
     }
     return `Ideal para ${planName.toLowerCase()}`;
   }
