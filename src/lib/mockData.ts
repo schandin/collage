@@ -51,7 +51,7 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'plan1',
     name: 'Artista Emergente',
-    pricePerMonth: 10,
+    pricePerMonth: 5, // Changed from 10 to 5
     photoLimit: 20,
     features: ['Hasta 20 obras en galería', 'Panel de control básico', 'Soporte por email']
   },
@@ -70,3 +70,4 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     features: ['Obras ilimitadas', 'Panel de control completo', 'Soporte premium 24/7', 'Promoción destacada en portada y redes']
   }
 ];
+
