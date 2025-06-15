@@ -1,23 +1,51 @@
+
+"use client";
+
+import { useState, useEffect } from 'react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
-import ArtworkCard from '@/app/components/ArtworkCard';
+import ArtworkFullscreenModal from '@/app/components/ArtworkFullscreenModal';
 import { mockArtists, mockArtworks } from '@/lib/mockData';
+import type { Artist as ArtistType, Artwork as ArtworkType } from '@/types';
 import Image from 'next/image';
-import { Mail, Instagram, Facebook, Twitter, MapPin, Palette } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 
-export async function generateStaticParams() {
-  return mockArtists.map((artist) => ({
-    id: artist.id,
-  }));
-}
+// We keep generateStaticParams for SSG if preferred, but page is client-rendered for modal.
+// If this causes issues due to "use client", it can be removed, and Next.js will handle dynamic routes.
+// For now, assuming it works for param generation, and client-side rendering takes over for interactivity.
+// export async function generateStaticParams() {
+//   return mockArtists.map((artist) => ({
+//     id: artist.id,
+//   }));
+// }
 
 export default function ArtistProfilePage({ params }: { params: { id: string } }) {
-  const artist = mockArtists.find(a => a.id === params.id);
-  const artistArtworks = mockArtworks.filter(art => art.artistId === params.id && art.status === 'approved');
+  const [artist, setArtist] = useState<ArtistType | null>(null);
+  const [artistArtworks, setArtistArtworks] = useState<ArtworkType[]>([]);
+  const [selectedArtwork, setSelectedArtwork] = useState<ArtworkType | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const foundArtist = mockArtists.find(a => a.id === params.id);
+    if (foundArtist) {
+      setArtist(foundArtist);
+      const artworks = mockArtworks.filter(art => art.artistId === params.id && art.status === 'approved');
+      setArtistArtworks(artworks);
+    }
+  }, [params.id]);
+
+  const handleOpenModal = (artwork: ArtworkType) => {
+    setSelectedArtwork(artwork);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedArtwork(null);
+  };
 
   if (!artist) {
     return (
@@ -40,85 +68,86 @@ export default function ArtistProfilePage({ params }: { params: { id: string } }
       <Header />
       <main className="flex-grow container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-          {/* Artist Info Column */}
-          <div className="md:col-span-1 space-y-6">
-            <Card className="shadow-xl overflow-hidden">
-              <CardHeader className="p-0">
-                <div className="aspect-square relative w-full">
-                  <Image
-                    src={artist.profileImageUrl}
-                    alt={artist.name}
-                    layout="fill"
-                    objectFit="cover"
-                    className="bg-muted"
-                    data-ai-hint={artist.dataAiHint || "artist portrait"}
-                  />
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <h1 className="text-4xl font-headline text-primary mb-2">{artist.name}</h1>
-                <div className="flex items-center text-muted-foreground mb-4">
-                  <MapPin className="w-5 h-5 mr-2 text-accent" />
-                  {artist.country}
-                </div>
-                
-                {artist.bio && <p className="text-foreground text-sm mb-6">{artist.bio}</p>}
-
-                <Separator className="my-6" />
-
-                <h2 className="text-xl font-headline text-primary mb-3">Contacto</h2>
-                <a href={`mailto:${artist.email}`} className="flex items-center text-accent hover:underline mb-4 text-sm">
-                  <Mail className="w-5 h-5 mr-2" />
-                  {artist.email}
-                </a>
-
-                {artist.socialMedia && (
-                  <div className="space-y-2">
-                    {artist.socialMedia.instagram && (
-                      <a href={`https://instagram.com/${artist.socialMedia.instagram}`} target="_blank" rel="noopener noreferrer" className="flex items-center text-foreground hover:text-accent text-sm">
-                        <Instagram className="w-5 h-5 mr-2" /> @{artist.socialMedia.instagram}
-                      </a>
-                    )}
-                    {artist.socialMedia.facebook && (
-                      <a href={`https://facebook.com/${artist.socialMedia.facebook}`} target="_blank" rel="noopener noreferrer" className="flex items-center text-foreground hover:text-accent text-sm">
-                        <Facebook className="w-5 h-5 mr-2" /> Facebook
-                      </a>
-                    )}
-                    {artist.socialMedia.twitter && (
-                      <a href={`https://twitter.com/${artist.socialMedia.twitter}`} target="_blank" rel="noopener noreferrer" className="flex items-center text-foreground hover:text-accent text-sm">
-                        <Twitter className="w-5 h-5 mr-2" /> @{artist.socialMedia.twitter}
-                      </a>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Artworks Gallery Column */}
-          <div className="md:col-span-2">
-            <h2 className="text-3xl font-headline text-primary mb-8 flex items-center">
-              <Palette className="w-7 h-7 mr-3 text-accent" />
-              Galería de Obras
-            </h2>
-            {artistArtworks.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {artistArtworks.map((artwork) => (
-                  <ArtworkCard key={artwork.id} artwork={artwork} />
-                ))}
+          {/* Left Column: Artist Details & Artworks */}
+          <div className="md:col-span-2 space-y-10">
+            <section>
+              <h1 className="text-4xl lg:text-5xl font-headline text-primary mb-2">{artist.name}</h1>
+              <div className="flex items-center text-muted-foreground text-lg mb-6">
+                <MapPin className="w-5 h-5 mr-2 text-accent" />
+                {artist.country}
               </div>
-            ) : (
-              <Card className="border-dashed border-2">
-                <CardContent className="p-10 text-center">
-                  <Palette className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Este artista aún no ha publicado obras aprobadas.</p>
-                </CardContent>
-              </Card>
-            )}
+              {artist.bio && (
+                <p className="text-foreground text-base leading-relaxed whitespace-pre-line">
+                  {artist.bio}
+                </p>
+              )}
+            </section>
+
+            <section>
+              <h2 className="text-3xl font-headline text-primary mb-6">Obras Destacadas</h2>
+              {artistArtworks.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {artistArtworks.slice(0, 20).map((artwork) => (
+                    <button
+                      key={artwork.id}
+                      onClick={() => handleOpenModal(artwork)}
+                      className="aspect-square relative block w-full overflow-hidden rounded-lg shadow-md hover:shadow-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 group"
+                      aria-label={`Ver obra ${artwork.title}`}
+                    >
+                      <Image
+                        src={artwork.imageUrl}
+                        alt={artwork.title}
+                        layout="fill"
+                        objectFit="cover"
+                        className="transition-transform duration-300 group-hover:scale-105"
+                        data-ai-hint={artwork.dataAiHint || "artwork thumbnail"}
+                      />
+                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-2">
+                        <p className="text-white text-xs text-center line-clamp-2">{artwork.title}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                 <Card className="border-dashed border-2">
+                    <CardContent className="p-10 text-center">
+                    <MapPin className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" /> {/* Re-using MapPin as generic placeholder */}
+                    <p className="text-muted-foreground">Este artista aún no ha publicado obras aprobadas.</p>
+                    </CardContent>
+                </Card>
+              )}
+            </section>
           </div>
+
+          {/* Right Column: Artist Profile Image */}
+          <aside className="md:col-span-1">
+            <div className="sticky top-24"> {/* Sticky position for profile image card */}
+              <Card className="shadow-xl overflow-hidden">
+                <CardHeader className="p-0">
+                  <div className="aspect-square relative w-full">
+                    <Image
+                      src={artist.profileImageUrl}
+                      alt={artist.name}
+                      layout="fill"
+                      objectFit="cover"
+                      className="bg-muted"
+                      data-ai-hint={artist.dataAiHint || "artist portrait"}
+                    />
+                  </div>
+                </CardHeader>
+                {/* Content for under the image if needed, e.g., a button */}
+                {/* Example:
+                <CardContent className="p-4 text-center">
+                  <Button variant="outline" className="w-full">Ver Exposición Actual</Button>
+                </CardContent>
+                */}
+              </Card>
+            </div>
+          </aside>
         </div>
       </main>
       <Footer />
+      <ArtworkFullscreenModal artwork={selectedArtwork} isOpen={isModalOpen} onClose={handleCloseModal} />
     </div>
   );
 }
