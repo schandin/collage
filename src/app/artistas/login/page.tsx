@@ -112,7 +112,7 @@ export default function ArtistLoginPage() {
                 </Link>
             </div>
             <Button variant="outline" asChild className="w-full mt-4">
-              <Link href="/artistas/registro"> 
+              <Link href="/suscripciones"> {/* Cambiado de /artistas/registro a /suscripciones */}
                 <UserPlus className="w-4 h-4 mr-2" />
                 Inscribirse como nuevo artista
               </Link>

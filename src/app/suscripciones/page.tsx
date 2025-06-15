@@ -1,3 +1,4 @@
+
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import { mockSubscriptionPlans } from '@/lib/mockData';
@@ -5,6 +6,7 @@ import type { SubscriptionPlan } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Zap } from 'lucide-react';
+import Link from 'next/link';
 
 function PlanCard({ plan }: { plan: SubscriptionPlan }) {
   return (
@@ -30,10 +32,11 @@ function PlanCard({ plan }: { plan: SubscriptionPlan }) {
       </CardContent>
       <CardFooter className="p-6 border-t">
         <Button 
+          asChild
           size="lg" 
           className={`w-full ${plan.name.includes("Profesional") ? 'bg-accent hover:bg-accent/90 text-accent-foreground' : 'bg-primary hover:bg-primary/90'}`}
         >
-          Suscribirse a {plan.name}
+          <Link href={`/pago/${plan.id}`}>Suscribirse a {plan.name}</Link>
         </Button>
       </CardFooter>
     </Card>
