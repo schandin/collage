@@ -30,15 +30,15 @@ export default function PanelArtistaPage() {
   const [artworkForm, setArtworkForm] = useState({
     title: '',
     description: '',
-    imageUrl: '', // Will store data URL or existing URL
+    imageUrl: '', 
     price: '',
     dataAiHint: '',
   });
 
-  // State for file upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null); // For new uploads
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null); 
   const [fileName, setFileName] = useState<string | null>(null);
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
 
 
   const [profileForm, setProfileForm] = useState({
@@ -93,6 +93,7 @@ export default function PanelArtistaPage() {
     setSelectedFile(null);
     setImagePreviewUrl(null);
     setFileName(null);
+    setIsImageProcessing(false);
   };
 
   const handleEditArtwork = (artwork: Artwork) => {
@@ -100,13 +101,14 @@ export default function PanelArtistaPage() {
     setArtworkForm({
       title: artwork.title,
       description: artwork.description || '',
-      imageUrl: artwork.imageUrl, // This will be the existing URL or data URL
+      imageUrl: artwork.imageUrl,
       price: artwork.price?.toString() || '',
       dataAiHint: artwork.dataAiHint || '',
     });
-    setSelectedFile(null); // Clear any previously selected file for a new upload
-    setImagePreviewUrl(null); // Clear previous file preview
+    setSelectedFile(null); 
+    setImagePreviewUrl(null); 
     setFileName(null);
+    setIsImageProcessing(false);
     const tabTrigger = document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"]');
     tabTrigger?.click();
   };
@@ -132,13 +134,23 @@ export default function PanelArtistaPage() {
 
   const processFile = (file: File) => {
     if (file && file.type.startsWith('image/')) {
+      setIsImageProcessing(true);
       setSelectedFile(file);
       setFileName(file.name);
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
-        setImagePreviewUrl(dataUrl); // Set preview for new upload
-        setArtworkForm(prev => ({ ...prev, imageUrl: dataUrl })); // Update form with data URL
+        setImagePreviewUrl(dataUrl); 
+        setArtworkForm(prev => ({ ...prev, imageUrl: dataUrl })); 
+        setIsImageProcessing(false);
+      };
+      reader.onerror = () => {
+        toast({ title: "Error al leer archivo", description: "No se pudo procesar la imagen.", variant: "destructive" });
+        setIsImageProcessing(false);
+        setSelectedFile(null);
+        setImagePreviewUrl(null);
+        setFileName(null);
+        setArtworkForm(prev => ({...prev, imageUrl: editingArtwork ? editingArtwork.imageUrl : ''}));
       };
       reader.readAsDataURL(file);
     } else {
@@ -146,7 +158,6 @@ export default function PanelArtistaPage() {
       setSelectedFile(null);
       setImagePreviewUrl(null);
       setFileName(null);
-      // If editing, ensure artworkForm.imageUrl is not cleared accidentally
       if (editingArtwork) {
         setArtworkForm(prev => ({...prev, imageUrl: editingArtwork.imageUrl}));
       } else {
@@ -181,7 +192,7 @@ export default function PanelArtistaPage() {
     setSelectedFile(null);
     setImagePreviewUrl(null);
     setFileName(null);
-    // If editing, revert to original image. If new, clear.
+    setIsImageProcessing(false); 
     if (editingArtwork) {
       setArtworkForm(prev => ({...prev, imageUrl: editingArtwork.imageUrl}));
     } else {
@@ -229,7 +240,7 @@ export default function PanelArtistaPage() {
 
   const handleArtworkSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!currentArtistId) return;
+    if (!currentArtistId || isImageProcessing) return;
 
     const artistProfile = mockArtists.find(a => a.id === currentArtistId);
     if (!artistProfile) {
@@ -242,7 +253,6 @@ export default function PanelArtistaPage() {
       return;
     }
     
-    // Use artworkForm.imageUrl which contains the data URI or original URL
     const finalImageUrl = artworkForm.imageUrl || (editingArtwork ? editingArtwork.imageUrl : 'https://placehold.co/600x400.png');
 
 
@@ -256,6 +266,7 @@ export default function PanelArtistaPage() {
           imageUrl: finalImageUrl,
           price: parseFloat(artworkForm.price) || undefined,
           dataAiHint: artworkForm.dataAiHint,
+          status: mockArtworks[index].status === 'approved' && artworkForm.imageUrl !== editingArtwork.imageUrl ? 'pending' : mockArtworks[index].status, // If image changed on approved work, set to pending
         };
         setArtistArtworks(prev => prev.map(art => art.id === editingArtwork.id ? mockArtworks[index] : art));
         toast({ title: "Obra actualizada" });
@@ -381,16 +392,17 @@ export default function PanelArtistaPage() {
                       onDrop={handleDrop}
                     >
                       <div className="space-y-1 text-center">
-                        {!currentImageToPreview && <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />}
+                        {!currentImageToPreview && !isImageProcessing && <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />}
+                        {isImageProcessing && <Loader2 className="mx-auto h-12 w-12 text-muted-foreground animate-spin" />}
                         <div className="flex text-sm text-muted-foreground justify-center">
-                          <Label htmlFor="artwork-file-input" className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
-                            <span>{currentImageToPreview ? 'Cambiar imagen' : 'Sube un archivo'}</span>
-                            <input id="artwork-file-input" name="artwork-file-input" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
+                          <Label htmlFor="artwork-file-input" className={`relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary ${isImageProcessing ? 'pointer-events-none opacity-50' : ''}`}>
+                            <span>{currentImageToPreview ? 'Cambiar imagen' : (isImageProcessing ? 'Procesando...' : 'Sube un archivo')}</span>
+                            <input id="artwork-file-input" name="artwork-file-input" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} disabled={isImageProcessing} />
                           </Label>
-                          {!currentImageToPreview && <p className="pl-1">o arrastra y suelta</p>}
+                          {!currentImageToPreview && !isImageProcessing && <p className="pl-1">o arrastra y suelta</p>}
                         </div>
-                        {!currentImageToPreview && <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WEBP</p>}
-                         {fileName && !currentImageToPreview && <p className="text-sm text-foreground pt-2">Archivo: {fileName}</p>}
+                        {!currentImageToPreview && !isImageProcessing && <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WEBP</p>}
+                         {fileName && !currentImageToPreview && !isImageProcessing && <p className="text-sm text-foreground pt-2">Archivo: {fileName}</p>}
                       </div>
                     </div>
 
@@ -411,6 +423,7 @@ export default function PanelArtistaPage() {
                             className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
                             onClick={handleRemoveImage}
                             aria-label="Eliminar imagen"
+                            disabled={isImageProcessing}
                         >
                             <X className="h-4 w-4" />
                         </Button>
@@ -441,12 +454,21 @@ export default function PanelArtistaPage() {
                 </CardContent>
                 <CardFooter className="justify-end space-x-2">
                   {editingArtwork && (
-                    <Button variant="outline" type="button" onClick={resetArtworkForm}>
+                    <Button variant="outline" type="button" onClick={resetArtworkForm} disabled={isImageProcessing}>
                       Cancelar Edición
                     </Button>
                   )}
-                  <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    <Save className="w-4 h-4 mr-2" /> {editingArtwork ? "Guardar Cambios" : "Subir Obra"}
+                  <Button 
+                    type="submit" 
+                    className="bg-accent text-accent-foreground hover:bg-accent/90"
+                    disabled={isImageProcessing}
+                  >
+                    {isImageProcessing ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    {editingArtwork ? "Guardar Cambios" : "Subir Obra"}
                   </Button>
                 </CardFooter>
               </form>
@@ -513,6 +535,5 @@ export default function PanelArtistaPage() {
     </div>
   );
 }
-
 
     
