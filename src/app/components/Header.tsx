@@ -1,15 +1,15 @@
 "use client";
 import Link from 'next/link';
-import { Scissors, Palette, UserCircle, ShieldCheck, Briefcase, Menu, X } from 'lucide-react'; // Changed Leaf to Scissors
+import { Scissors, UserCircle, ShieldCheck, Briefcase, Menu, X } from 'lucide-react'; // Palette removed, Scissors was already here.
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import React, { useState } from 'react';
 
 const navLinks = [
-  { href: '/', label: 'Inicio', icon: <Palette className="w-4 h-4" /> },
+  { href: '/', label: 'Inicio', icon: <Scissors className="w-4 h-4" /> }, // Changed Palette to Scissors
   { href: '/artistas', label: 'Artistas', icon: <UserCircle className="w-4 h-4" /> },
   { href: '/suscripciones', label: 'Suscripciones', icon: <Briefcase className="w-4 h-4" /> },
-  { href: '/panel-artista', label: 'Panel Artista', icon: <Palette className="w-4 h-4" /> },
+  { href: '/panel-artista', label: 'Panel Artista', icon: <Scissors className="w-4 h-4" /> }, // Kept Scissors as per previous change
   { href: '/admin/login', label: 'Admin', icon: <ShieldCheck className="w-4 h-4" /> },
 ];
 
@@ -20,7 +20,7 @@ export default function Header() {
     <header className="bg-card shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-2xl font-headline text-primary hover:text-primary/80 transition-colors">
-          <Scissors className="w-8 h-8 text-accent" /> {/* Changed Leaf to Scissors */}
+          <Scissors className="w-8 h-8 text-accent" /> 
           Collage Conexión
         </Link>
 
@@ -48,7 +48,7 @@ export default function Header() {
             <SheetContent side="right" className="w-[280px] bg-card p-4">
               <div className="flex justify-between items-center mb-6">
                  <Link href="/" className="flex items-center gap-2 text-xl font-headline text-primary" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Scissors className="w-7 h-7 text-accent" /> {/* Changed Leaf to Scissors */}
+                    <Scissors className="w-7 h-7 text-accent" /> 
                     Collage Conexión
                   </Link>
                 <SheetClose asChild>
