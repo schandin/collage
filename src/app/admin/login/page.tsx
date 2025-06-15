@@ -15,7 +15,7 @@ import { LogIn, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 
 // Mock credentials
 const ADMIN_USERNAME = "collage.ar";
-const ADMIN_PASSWORD = "adminpassword"; // Using a placeholder for "tu mail"
+const ADMIN_PASSWORD = "schandin@gmail.com"; 
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -115,5 +115,3 @@ export default function AdminLoginPage() {
     </div>
   );
 }
-
-    

@@ -1,0 +1,47 @@
+[33mcommit c53d7045b00abf67da9fe411770e49383a061553[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: El canal de Arte <schandin@gmail.com>
+Date:   Sun Jun 15 04:46:11 2025 +0000
+
+    todos los lugares donde debo introducir usuario y contraseña deberia agr
+
+[33mcommit 27432f1b1bce35f42b615da532fb352d3266f68c[m
+Author: El canal de Arte <schandin@gmail.com>
+Date:   Sun Jun 15 04:15:29 2025 +0000
+
+    Make the following changes:
+    
+    ,
+    
+    Find this element:
+    
+      <LinkComponent hre
+
+[33mcommit 2aa4311cadd8bad6cf7cb8ab780b5dcfc7cb9acc[m
+Author: El canal de Arte <schandin@gmail.com>
+Date:   Sun Jun 15 04:12:09 2025 +0000
+
+    Make the following changes:
+    
+    ,
+    
+    Find this element:
+    
+      <LinkComponent hre
+
+[33mcommit 7ff6107ccaee30a1257b3b0be137ff3126ec6fd3[m
+Author: El canal de Arte <schandin@gmail.com>
+Date:   Sun Jun 15 03:40:31 2025 +0000
+
+    I see this error with the app, reported by NextJS, please fix it. The er
+
+[33mcommit facf2e6d35616d114f438239b84e61fc248cb027[m
+Author: El canal de Arte <schandin@gmail.com>
+Date:   Sun Jun 15 03:09:18 2025 +0000
+
+    Updated app
+
+[33mcommit 58ac4754989062367db3a97f808b805534292aa2[m
+Author: Your Name <you@example.com>
+Date:   Fri Jun 13 14:39:34 2025 +0000
+
+    initial scaffold
