@@ -62,8 +62,15 @@ export default function PanelArtistaPage() {
 
     let artistId = localStorage.getItem('currentArtistId');
     if (!artistId) {
-      artistId = 'artist1'; 
-      localStorage.setItem('currentArtistId', artistId);
+      toast({
+        title: "Error de Identificación",
+        description: "No se pudo determinar tu ID de artista. Por favor, intenta iniciar sesión de nuevo.",
+        variant: "destructive",
+      });
+      localStorage.removeItem('isArtistAuthenticated'); 
+      router.push('/artistas/login');
+      setIsLoading(false);
+      return;
     }
     setCurrentArtistId(artistId);
     
@@ -81,6 +88,8 @@ export default function PanelArtistaPage() {
       });
       setArtistArtworks(mockArtworks.filter(art => art.artistId === artistId));
     } else if (artistId.startsWith('newArtist-')) {
+       // For a new artist not yet in mockData, initialize with empty artworks
+       // and potentially default profile form values if desired, or leave as is
        setArtistArtworks([]);
     }
     
@@ -101,24 +110,27 @@ export default function PanelArtistaPage() {
     setArtworkForm({
       title: artwork.title,
       description: artwork.description || '',
-      imageUrl: artwork.imageUrl,
+      imageUrl: artwork.imageUrl, // Keep original image URL for editing context
       price: artwork.price?.toString() || '',
       dataAiHint: artwork.dataAiHint || '',
     });
-    setSelectedFile(null); 
-    setImagePreviewUrl(null); 
+    setSelectedFile(null); // Reset file selection
+    setImagePreviewUrl(null); // Reset preview if a new file isn't selected
     setFileName(null);
     setIsImageProcessing(false);
+    // Programmatically switch to the 'subir-obra' tab
     const tabTrigger = document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"]');
     tabTrigger?.click();
   };
 
   const handleDeleteArtwork = (artworkId: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar esta obra?")) {
+      // Remove from global mockArtworks
       const artworkIndex = mockArtworks.findIndex(art => art.id === artworkId);
       if (artworkIndex > -1) {
         mockArtworks.splice(artworkIndex, 1);
       }
+      // Update local state
       setArtistArtworks(current => current.filter(art => art.id !== artworkId));
       toast({ title: "Obra eliminada" });
     }
@@ -140,8 +152,8 @@ export default function PanelArtistaPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const dataUrl = reader.result as string;
-        setImagePreviewUrl(dataUrl); 
-        setArtworkForm(prev => ({ ...prev, imageUrl: dataUrl })); 
+        setImagePreviewUrl(dataUrl); // For preview
+        setArtworkForm(prev => ({ ...prev, imageUrl: dataUrl })); // Store Data URL in form
         setIsImageProcessing(false);
       };
       reader.onerror = () => {
@@ -150,6 +162,7 @@ export default function PanelArtistaPage() {
         setSelectedFile(null);
         setImagePreviewUrl(null);
         setFileName(null);
+        // If editing, revert to original image URL, otherwise clear it
         setArtworkForm(prev => ({...prev, imageUrl: editingArtwork ? editingArtwork.imageUrl : ''}));
       };
       reader.readAsDataURL(file);
@@ -192,7 +205,9 @@ export default function PanelArtistaPage() {
     setSelectedFile(null);
     setImagePreviewUrl(null);
     setFileName(null);
-    setIsImageProcessing(false); 
+    setIsImageProcessing(false); // Ensure processing is false
+    // If editing, artworkForm.imageUrl should revert to the original artwork's image.
+    // If creating new, it should be empty.
     if (editingArtwork) {
       setArtworkForm(prev => ({...prev, imageUrl: editingArtwork.imageUrl}));
     } else {
@@ -206,7 +221,7 @@ export default function PanelArtistaPage() {
     if (!currentArtistId) return;
 
     let existingArtist = mockArtists.find(a => a.id === currentArtistId);
-    if (existingArtist) { 
+    if (existingArtist) { // Update existing artist
       existingArtist.name = profileForm.name;
       existingArtist.country = profileForm.country;
       existingArtist.bio = profileForm.bio;
@@ -217,7 +232,7 @@ export default function PanelArtistaPage() {
         instagram: profileForm.instagram,
         facebook: profileForm.facebook,
       };
-    } else { 
+    } else { // Create new artist if ID is 'newArtist-...' and not found
       const newArtist: Artist = {
         id: currentArtistId,
         name: profileForm.name,
@@ -226,12 +241,12 @@ export default function PanelArtistaPage() {
         dataAiHint: profileForm.dataAiHint,
         email: profileForm.email,
         bio: profileForm.bio,
-        artworks: [],
+        artworks: [], // New artist starts with no artworks
         socialMedia: {
           instagram: profileForm.instagram,
           facebook: profileForm.facebook,
         },
-        status: 'pending_approval', 
+        status: 'pending_approval', // New artists need approval
       };
       mockArtists.push(newArtist);
     }
@@ -242,46 +257,71 @@ export default function PanelArtistaPage() {
     e.preventDefault();
     if (!currentArtistId || isImageProcessing) return;
 
-    const artistProfile = mockArtists.find(a => a.id === currentArtistId);
-    if (!artistProfile) {
-        toast({ title: "Error", description: "Perfil de artista no encontrado. Guarda tu perfil primero.", variant: "destructive"});
-        return;
+    if (!artworkForm.title.trim()) {
+      toast({ title: "Título requerido", description: "Por favor, asigna un título a tu obra.", variant: "destructive" });
+      return;
     }
 
+    // Image is required for new artworks. For editing, if no new image is selected, the existing one is used.
+    // artworkForm.imageUrl will hold the Data URL if a new image was processed, 
+    // or the original URL if editing and no new image was selected, or empty if new and no image.
     if (!artworkForm.imageUrl && !editingArtwork) {
       toast({ title: "Imagen requerida", description: "Por favor, sube una imagen para la obra.", variant: "destructive" });
       return;
     }
     
-    const finalImageUrl = artworkForm.imageUrl || (editingArtwork ? editingArtwork.imageUrl : 'https://placehold.co/600x400.png');
+    const artistProfile = mockArtists.find(a => a.id === currentArtistId);
+    if (!artistProfile) {
+        toast({ 
+          title: "Guarda tu perfil primero", 
+          description: "Para subir obras, tu perfil de artista debe estar guardado. Ve a la pestaña 'Mi Perfil' y guarda tus datos.", 
+          variant: "destructive"
+        });
+        return;
+    }
+
+    // Determine the final image URL
+    // If editing and no new image was uploaded (artworkForm.imageUrl is original or empty after removal attempt),
+    // and selectedFile is null, it means we should stick to editingArtwork.imageUrl.
+    // If a new file was selected, artworkForm.imageUrl has the Data URL.
+    // If creating new, artworkForm.imageUrl must have the Data URL.
+    const finalImageUrl = artworkForm.imageUrl || (editingArtwork ? editingArtwork.imageUrl : '');
+     if (!finalImageUrl) { // Should not happen if previous checks are correct, but as a safeguard
+      toast({ title: "Error de imagen", description: "No se pudo determinar la imagen de la obra.", variant: "destructive" });
+      return;
+    }
 
 
-    if (editingArtwork) { 
+    if (editingArtwork) { // Editing existing artwork
       const index = mockArtworks.findIndex(art => art.id === editingArtwork.id);
       if (index > -1) {
+        const originalStatus = mockArtworks[index].status;
+        const imageChanged = artworkForm.imageUrl !== editingArtwork.imageUrl && selectedFile; // Image changed only if a new file was processed
+
         mockArtworks[index] = {
           ...mockArtworks[index],
           title: artworkForm.title,
           description: artworkForm.description,
-          imageUrl: finalImageUrl,
+          imageUrl: finalImageUrl, // Use the determined final image URL
           price: parseFloat(artworkForm.price) || undefined,
           dataAiHint: artworkForm.dataAiHint,
-          status: mockArtworks[index].status === 'approved' && artworkForm.imageUrl !== editingArtwork.imageUrl ? 'pending' : mockArtworks[index].status, // If image changed on approved work, set to pending
+          // If an approved artwork's image is changed, it goes back to pending. Otherwise, status remains.
+          status: (originalStatus === 'approved' && imageChanged) ? 'pending' : originalStatus,
         };
         setArtistArtworks(prev => prev.map(art => art.id === editingArtwork.id ? mockArtworks[index] : art));
-        toast({ title: "Obra actualizada" });
+        toast({ title: "Obra actualizada", description: imageChanged && originalStatus === 'approved' ? "Cambios guardados. La obra requerirá nueva aprobación por cambio de imagen." : "Cambios guardados." });
       }
-    } else { 
+    } else { // Creating new artwork
       const newArtwork: Artwork = {
         id: `art-${Date.now()}`,
         title: artworkForm.title,
-        imageUrl: finalImageUrl, 
+        imageUrl: finalImageUrl, // This must be the Data URL from a newly uploaded image
         artistId: currentArtistId,
-        artistName: artistProfile.name, 
+        artistName: artistProfile.name, // Safe to access .name due to check above
         price: parseFloat(artworkForm.price) || undefined,
         description: artworkForm.description,
         uploadDate: new Date().toISOString().split('T')[0],
-        status: 'pending',
+        status: 'pending', // New artworks are pending approval
         dataAiHint: artworkForm.dataAiHint,
       };
       mockArtworks.push(newArtwork);
@@ -303,10 +343,15 @@ export default function PanelArtistaPage() {
   }
 
   if (!isAuthenticated) {
+    // This should not be reached if useEffect redirects, but as a fallback
     return null; 
   }
   
-  const currentImageToPreview = imagePreviewUrl || (editingArtwork && artworkForm.imageUrl && !imagePreviewUrl ? artworkForm.imageUrl : null);
+  // Determine the image to show in preview:
+  // 1. If imagePreviewUrl (from new file upload) exists, use it.
+  // 2. Else, if editingArtwork and its artworkForm.imageUrl (which might be original or newly set) exists, use it.
+  // 3. Else, null.
+  const currentImageToPreview = imagePreviewUrl || (editingArtwork && artworkForm.imageUrl && !selectedFile ? artworkForm.imageUrl : null);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -381,6 +426,7 @@ export default function PanelArtistaPage() {
                   <CardTitle>{editingArtwork ? "Editar Obra" : "Subir Nueva Obra"}</CardTitle>
                   <CardDescription>
                     {editingArtwork ? `Modifica los detalles de "${editingArtwork.title}".` : "Añade una nueva pieza a tu colección para que el mundo la vea."}
+                    {editingArtwork && selectedFile && <span className="block text-xs text-blue-600 mt-1">Has seleccionado una nueva imagen. Si la guardas, la obra podría requerir nueva aprobación.</span>}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -461,7 +507,7 @@ export default function PanelArtistaPage() {
                   <Button 
                     type="submit" 
                     className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    disabled={isImageProcessing}
+                    disabled={isImageProcessing || (!artworkForm.imageUrl && !editingArtwork)} // Also disable if no image for new artwork
                   >
                     {isImageProcessing ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
