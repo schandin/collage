@@ -1,3 +1,4 @@
+
 import type { Artist, Artwork, SubscriptionPlan } from '@/types';
 
 export const mockArtworks: Artwork[] = [
@@ -51,14 +52,14 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'plan1',
     name: 'Artista Emergente',
-    pricePerMonth: 5, // Changed from 10 to 5
+    pricePerMonth: 5,
     photoLimit: 20,
     features: ['Hasta 20 obras en galería', 'Panel de control básico', 'Soporte por email']
   },
   {
     id: 'plan2',
     name: 'Artista Profesional',
-    pricePerMonth: 25,
+    pricePerMonth: 10, // Changed from 25 to 10
     photoLimit: 40,
     features: ['Hasta 40 obras en galería', 'Panel de control avanzado', 'Prioridad en soporte', 'Promoción en newsletter']
   },
