@@ -13,12 +13,6 @@ import { mockSubscriptionPlans } from '@/lib/mockData';
 import type { SubscriptionPlan } from '@/types';
 import { CreditCard, CheckCircle, ArrowLeft } from 'lucide-react';
 
-export async function generateStaticParams() {
-  return mockSubscriptionPlans.map((plan) => ({
-    planId: plan.id,
-  }));
-}
-
 export default function PaymentPage() {
   const router = useRouter();
   const params = useParams();
