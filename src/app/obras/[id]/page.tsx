@@ -1,3 +1,4 @@
+
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import { mockArtworks, mockArtists } from '@/lib/mockData';
@@ -52,8 +53,8 @@ export default function ArtworkDetailPage({ params }: { params: { id: string } }
                 <Image
                   src={artwork.imageUrl}
                   alt={artwork.title}
-                  layout="fill"
-                  objectFit="contain" // Use 'contain' to see the whole artwork
+                  fill
+                  style={{ objectFit: "contain" }}
                   data-ai-hint={artwork.dataAiHint || "detailed art"}
                 />
               </div>

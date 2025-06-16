@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Artist } from '@/types';
@@ -17,8 +18,8 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
           <Image
             src={artist.profileImageUrl}
             alt={artist.name}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: "cover" }}
             className="transition-transform duration-300 group-hover:scale-105"
             data-ai-hint={artist.dataAiHint || "artist portrait"}
           />

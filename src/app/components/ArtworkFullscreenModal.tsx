@@ -33,8 +33,8 @@ export default function ArtworkFullscreenModal({ artwork, artistEmail, isOpen, o
           <Image
             src={artwork.imageUrl}
             alt={artwork.title}
-            layout="fill"
-            objectFit="contain"
+            fill
+            style={{ objectFit: "contain" }}
             data-ai-hint={artwork.dataAiHint || "detailed art"}
             className="rounded-md"
           />

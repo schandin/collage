@@ -15,7 +15,7 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
 
 export default function ArtistProfilePage() {
-  const routeParams = useParams(); 
+  const params = useParams(); 
 
   const [artist, setArtist] = useState<ArtistType | null>(null);
   const [artistArtworks, setArtistArtworks] = useState<ArtworkType[]>([]);
@@ -24,14 +24,14 @@ export default function ArtistProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (routeParams === null) {
+    if (params === null) {
       setIsLoading(true);
       setArtist(null);
       setArtistArtworks([]);
       return;
     }
 
-    const currentArtistId = typeof routeParams.id === 'string' ? routeParams.id : null;
+    const currentArtistId = typeof params.id === 'string' ? params.id : null;
 
     if (currentArtistId) {
       const foundArtist = mockArtists.find(a => a.id === currentArtistId);
@@ -48,7 +48,7 @@ export default function ArtistProfilePage() {
         setArtistArtworks([]);
     }
     setIsLoading(false);
-  }, [routeParams]); 
+  }, [params]); 
 
   const handleOpenModal = (artwork: ArtworkType) => {
     setSelectedArtwork(artwork);
@@ -122,8 +122,8 @@ export default function ArtistProfilePage() {
                       <Image
                         src={artwork.imageUrl}
                         alt={artwork.title}
-                        layout="fill"
-                        objectFit="cover"
+                        fill
+                        style={{ objectFit: "cover" }}
                         className="transition-transform duration-300 group-hover:scale-105"
                         data-ai-hint={artwork.dataAiHint || "artwork thumbnail"}
                       />
@@ -152,8 +152,8 @@ export default function ArtistProfilePage() {
                     <Image
                       src={artist.profileImageUrl}
                       alt={artist.name}
-                      layout="fill"
-                      objectFit="cover"
+                      fill
+                      style={{ objectFit: "cover" }}
                       className="bg-muted"
                       data-ai-hint={artist.dataAiHint || "artist portrait"}
                     />

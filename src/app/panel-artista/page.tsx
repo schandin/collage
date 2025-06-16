@@ -474,7 +474,7 @@ export default function PanelArtistaPage() {
                     {artistArtworks.map((artwork) => (
                       <Card key={artwork.id} className="overflow-hidden group">
                         <div className="relative aspect-[4/3]">
-                          <Image src={artwork.imageUrl} alt={artwork.title} layout="fill" objectFit="cover" data-ai-hint={artwork.dataAiHint || "collage art"} />
+                          <Image src={artwork.imageUrl} alt={artwork.title} fill style={{ objectFit: "cover" }} data-ai-hint={artwork.dataAiHint || "collage art"} />
                           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2 p-2">
                             <Button size="sm" variant="outline" onClick={() => handleEditArtwork(artwork)} className="bg-background/80 hover:bg-background">
                               <Edit3 className="w-4 h-4 mr-1" /> Editar
@@ -544,8 +544,8 @@ export default function PanelArtistaPage() {
                         <Image
                           src={currentImageToPreview}
                           alt="Previsualización de la obra"
-                          layout="fill"
-                          objectFit="cover"
+                          fill
+                          style={{ objectFit: "cover" }}
                           className="rounded"
                           data-ai-hint={artworkForm.dataAiHint || "artwork preview"}
                         />
@@ -643,8 +643,8 @@ export default function PanelArtistaPage() {
                         <Image
                           src={currentProfileImageToPreview}
                           alt="Previsualización foto de perfil"
-                          layout="fill"
-                          objectFit="cover"
+                          fill
+                          style={{ objectFit: "cover" }}
                           className="rounded"
                           data-ai-hint={profileForm.dataAiHint || "artist portrait preview"}
                         />

@@ -98,8 +98,8 @@ export default function Home() {
                             <Image
                               src={artwork.imageUrl}
                               alt={artwork.title}
-                              layout="fill"
-                              objectFit="cover"
+                              fill
+                              style={{ objectFit: "cover" }}
                               className="transition-transform duration-500 ease-in-out group-hover:scale-110"
                               data-ai-hint={artwork.dataAiHint || "artist artwork"}
                             />

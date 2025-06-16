@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Artwork } from '@/types';
@@ -17,8 +18,8 @@ export default function ArtworkCard({ artwork }: ArtworkCardProps) {
           <Image
             src={artwork.imageUrl}
             alt={artwork.title}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: "cover" }}
             className="transition-transform duration-300 group-hover:scale-105"
             data-ai-hint={artwork.dataAiHint || "collage art"}
           />

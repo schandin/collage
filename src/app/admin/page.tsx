@@ -182,7 +182,7 @@ export default function AdminDashboardPage() {
                   {pendingArtworks.map((artwork) => (
                     <Card key={artwork.id} className="overflow-hidden">
                        <div className="relative aspect-[4/3] w-full">
-                         <Image src={artwork.imageUrl} alt={artwork.title} layout="fill" objectFit="cover" data-ai-hint={artwork.dataAiHint || "pending art"} />
+                         <Image src={artwork.imageUrl} alt={artwork.title} fill style={{ objectFit: "cover" }} data-ai-hint={artwork.dataAiHint || "pending art"} />
                        </div>
                        <CardContent className="p-4">
                          <h3 className="font-semibold text-lg mb-1 truncate" title={artwork.title}>{artwork.title}</h3>
