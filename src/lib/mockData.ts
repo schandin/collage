@@ -1,7 +1,8 @@
 
 import type { Artist, Artwork, SubscriptionPlan } from '@/types';
 
-export const mockArtworks: Artwork[] = [
+// Default data if nothing is in localStorage
+const defaultMockArtworks: Artwork[] = [
   { id: 'art1', title: 'Sueños Entrelazados', imageUrl: 'https://placehold.co/600x400.png', artistId: 'artist1', artistName: 'Elena Rodriguez', price: 150, description: 'Un collage que explora la interconexión de los sueños y la realidad.', uploadDate: '2024-05-01', status: 'approved', dataAiHint: 'abstract collage' },
   { id: 'art2', title: 'Ciudad Fragmentada', imageUrl: 'https://placehold.co/600x450.png', artistId: 'artist1', artistName: 'Elena Rodriguez', price: 200, description: 'Representación de la vida urbana a través de fragmentos de revistas y texturas.', uploadDate: '2024-05-10', status: 'approved', dataAiHint: 'urban collage' },
   { id: 'art3', title: 'Naturaleza Viva', imageUrl: 'https://placehold.co/500x700.png', artistId: 'artist2', artistName: 'Carlos Gomez', price: 120, description: 'Collage vibrante con elementos orgánicos y colores terrosos.', uploadDate: '2024-04-20', status: 'approved', dataAiHint: 'nature collage' },
@@ -10,7 +11,7 @@ export const mockArtworks: Artwork[] = [
   { id: 'art6', title: 'Memorias Futuras', imageUrl: 'https://placehold.co/600x600.png', artistId: 'artist3', artistName: 'Ana Silva', description: 'Una pieza que juega con la nostalgia y las visiones del porvenir.', uploadDate: '2024-05-18', status: 'rejected', dataAiHint: 'vintage collage' },
 ];
 
-export const mockArtists: Artist[] = [
+const defaultMockArtists: Artist[] = [
   {
     id: 'artist1',
     name: 'Elena Rodriguez',
@@ -19,7 +20,7 @@ export const mockArtists: Artist[] = [
     email: 'elena.rodriguez@example.com',
     socialMedia: { instagram: 'elena_art', facebook: 'elena.art.fb' },
     bio: 'Artista visual especializada en collage analógico y digital. Mi obra explora la feminidad y la naturaleza.',
-    artworks: mockArtworks.filter(art => art.artistId === 'artist1'),
+    artworks: defaultMockArtworks.filter(art => art.artistId === 'artist1'),
     dataAiHint: 'artist portrait',
     status: 'active',
   },
@@ -31,7 +32,7 @@ export const mockArtists: Artist[] = [
     email: 'carlos.gomez@example.com',
     socialMedia: { twitter: 'carlosg_collage' },
     bio: 'Apasionado por el collage surrealista, combino elementos vintage con técnicas modernas para crear mundos oníricos.',
-    artworks: mockArtworks.filter(art => art.artistId === 'artist2'),
+    artworks: defaultMockArtworks.filter(art => art.artistId === 'artist2'),
     dataAiHint: 'artist studio',
     status: 'active',
   },
@@ -42,11 +43,105 @@ export const mockArtists: Artist[] = [
     profileImageUrl: 'https://placehold.co/300x300.png',
     email: 'ana.silva@example.com',
     bio: 'Collages que fusionan la cultura pop con la crítica social, utilizando colores vibrantes y mensajes directos.',
-    artworks: mockArtworks.filter(art => art.artistId === 'artist3'),
+    artworks: defaultMockArtworks.filter(art => art.artistId === 'artist3'),
     dataAiHint: 'woman artist',
-    status: 'active', 
+    status: 'pending_approval', 
   },
 ];
+
+// Functions to load from localStorage
+const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+  if (typeof window === 'undefined') {
+    return defaultValue;
+  }
+  try {
+    const item = window.localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.warn(`Error reading localStorage key "${key}":`, error);
+    return defaultValue;
+  }
+};
+
+// Functions to save to localStorage
+const saveToLocalStorage = <T>(key: string, value: T): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn(`Error writing to localStorage key "${key}":`, error);
+  }
+};
+
+// Exported mock data, loaded from localStorage or defaults
+export let mockArtworks: Artwork[] = loadFromLocalStorage<Artwork[]>('mockArtworksData', defaultMockArtworks);
+export let mockArtists: Artist[] = loadFromLocalStorage<Artist[]>('mockArtistsData', defaultMockArtists);
+
+// Function to re-synchronize artist names in artworks and artwork lists in artists
+const reSyncData = () => {
+  // Ensure artworks within each artist object are correctly filtered from the main mockArtworks list
+  mockArtists = mockArtists.map(artist => ({
+    ...artist,
+    artworks: mockArtworks.filter(artwork => artwork.artistId === artist.id)
+  }));
+  // Ensure artistName in artworks is correct based on the current artist name
+  mockArtworks = mockArtworks.map(artwork => {
+    const artist = mockArtists.find(a => a.id === artwork.artistId);
+    return {
+      ...artwork,
+      artistName: artist ? artist.name : 'Artista Desconocido' // Fallback if artist not found
+    };
+  });
+};
+
+// Initial sync and save if loaded from defaults (or if localStorage was empty)
+if (typeof window !== 'undefined') {
+  const artworksFromStorage = window.localStorage.getItem('mockArtworksData');
+  const artistsFromStorage = window.localStorage.getItem('mockArtistsData');
+
+  let artistsInitializedFromDefaults = false;
+  let artworksInitializedFromDefaults = false;
+
+  if (!artistsFromStorage) {
+    saveToLocalStorage('mockArtistsData', defaultMockArtists);
+    mockArtists = [...defaultMockArtists]; // Use defaults if nothing in storage
+    artistsInitializedFromDefaults = true;
+  }
+  
+  if (!artworksFromStorage) {
+    saveToLocalStorage('mockArtworksData', defaultMockArtworks);
+    mockArtworks = [...defaultMockArtworks]; // Use defaults if nothing in storage
+    artworksInitializedFromDefaults = true;
+  }
+
+  // If either was initialized from defaults, or if data is simply loaded, resync.
+  reSyncData();
+
+  // If data was initialized from defaults, save the potentially re-synced versions back.
+  if (artistsInitializedFromDefaults) {
+    saveToLocalStorage('mockArtistsData', mockArtists);
+  }
+  if (artworksInitializedFromDefaults) {
+    saveToLocalStorage('mockArtworksData', mockArtworks);
+  }
+}
+
+// Helper functions to update and save, ensuring data consistency
+export const updateAndSaveArtists = (updatedArtists: Artist[]) => {
+  mockArtists = [...updatedArtists]; // Update the in-memory array (new reference for reactivity)
+  reSyncData(); // Re-sync artist names in artworks and artwork lists in artists
+  saveToLocalStorage('mockArtistsData', mockArtists);
+  saveToLocalStorage('mockArtworksData', mockArtworks); // Save artworks too, as artistName might have changed
+};
+
+export const updateAndSaveArtworks = (updatedArtworks: Artwork[]) => {
+  mockArtworks = [...updatedArtworks]; // Update the in-memory array
+  reSyncData(); // Re-sync artwork lists in artists
+  saveToLocalStorage('mockArtworksData', mockArtworks);
+  saveToLocalStorage('mockArtistsData', mockArtists); // Save artists too, as their artwork lists might change
+};
 
 export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {
@@ -71,10 +166,3 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     features: ['Hasta 100 fotos en galería', 'Panel de control', 'Soporte por Chatbot', 'Promoción en newsletter', 'Uso de la App de Collage']
   }
 ];
-
-
-
-
-
-
-

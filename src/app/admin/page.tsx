@@ -10,7 +10,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCheck, UserX, Edit, Trash2, ShieldCheck, Search, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIcon } from 'lucide-react';
-import { mockArtists, mockArtworks } from '@/lib/mockData';
+import { 
+  mockArtists as globalMockArtists, 
+  mockArtworks as globalMockArtworks,
+  updateAndSaveArtists,
+  updateAndSaveArtworks
+} from '@/lib/mockData';
 import type { Artist, Artwork } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
@@ -19,8 +24,9 @@ import { useToast } from '@/hooks/use-toast';
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [artists, setArtists] = useState<Artist[]>(() => [...mockArtists]); // Initialize with a copy
-  const [artworks, setArtworks] = useState<Artwork[]>(() => [...mockArtworks]); // Initialize with a copy
+  // Initialize local state from the global, localStorage-backed data
+  const [artists, setArtists] = useState<Artist[]>(() => globalMockArtists.map(a => ({...a})));
+  const [artworks, setArtworks] = useState<Artwork[]>(() => globalMockArtworks.map(art => ({...art})));
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -29,6 +35,9 @@ export default function AdminDashboardPage() {
       router.push('/admin/login');
     } else {
       setIsAuthenticated(true);
+      // Re-sync local state with global state on mount, in case it changed elsewhere or on initial load
+      setArtists(globalMockArtists.map(a => ({...a})));
+      setArtworks(globalMockArtworks.map(art => ({...art})));
     }
   }, [router]);
 
@@ -36,52 +45,53 @@ export default function AdminDashboardPage() {
     // Update local state for admin UI
     setArtists(prev => prev.map(a => a.id === artistId ? { ...a, status: 'active' } : a));
     
-    // Update global mockArtists array
-    const artistIndex = mockArtists.findIndex(a => a.id === artistId);
-    if (artistIndex > -1) {
-      mockArtists[artistIndex].status = 'active';
-    }
-    toast({ title: "Artista Aprobado", description: `El artista ${mockArtists[artistIndex]?.name || artistId} ahora está activo.` });
-    console.log(`Artist ${artistId} approved and mockArtists updated.`);
+    // Update global mockArtists array and save to localStorage
+    const updatedGlobalArtists = globalMockArtists.map(a =>
+      a.id === artistId ? { ...a, status: 'active' } : a
+    );
+    updateAndSaveArtists(updatedGlobalArtists);
+
+    const approvedArtistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
+    toast({ title: "Artista Aprobado", description: `El artista ${approvedArtistName} ahora está activo.` });
   };
 
   const handleBlockArtist = (artistId: string) => {
     // Update local state for admin UI
     setArtists(prev => prev.map(a => a.id === artistId ? { ...a, status: 'blocked' } : a));
 
-    // Update global mockArtists array
-    const artistIndex = mockArtists.findIndex(a => a.id === artistId);
-    if (artistIndex > -1) {
-      mockArtists[artistIndex].status = 'blocked';
-    }
-    toast({ title: "Artista Bloqueado", description: `El artista ${mockArtists[artistIndex]?.name || artistId} ha sido bloqueado.`, variant: "destructive" });
-    console.log(`Artist ${artistId} blocked and mockArtists updated.`);
+    // Update global mockArtists array and save to localStorage
+    const updatedGlobalArtists = globalMockArtists.map(a =>
+      a.id === artistId ? { ...a, status: 'blocked' } : a
+    );
+    updateAndSaveArtists(updatedGlobalArtists);
+    const blockedArtistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
+    toast({ title: "Artista Bloqueado", description: `El artista ${blockedArtistName} ha sido bloqueado.`, variant: "destructive" });
   };
   
   const handleApproveArtwork = (artworkId: string) => {
     // Update local state for admin UI
     setArtworks(prev => prev.map(art => art.id === artworkId ? { ...art, status: 'approved' } : art));
 
-    // Update global mockArtworks array
-    const artworkIndex = mockArtworks.findIndex(art => art.id === artworkId);
-    if (artworkIndex > -1) {
-        mockArtworks[artworkIndex].status = 'approved';
-    }
-    toast({ title: "Obra Aprobada", description: `La obra ${mockArtworks[artworkIndex]?.title || artworkId} ha sido aprobada.` });
-    console.log(`Artwork ${artworkId} approved and mockArtworks updated.`);
+    // Update global mockArtworks array and save to localStorage
+    const updatedGlobalArtworks = globalMockArtworks.map(art =>
+      art.id === artworkId ? { ...art, status: 'approved' } : art
+    );
+    updateAndSaveArtworks(updatedGlobalArtworks);
+    const approvedArtworkTitle = updatedGlobalArtworks.find(art => art.id === artworkId)?.title || artworkId;
+    toast({ title: "Obra Aprobada", description: `La obra ${approvedArtworkTitle} ha sido aprobada.` });
   };
 
   const handleRejectArtwork = (artworkId: string) => {
     // Update local state for admin UI
     setArtworks(prev => prev.map(art => art.id === artworkId ? { ...art, status: 'rejected' } : art));
     
-    // Update global mockArtworks array
-    const artworkIndex = mockArtworks.findIndex(art => art.id === artworkId);
-    if (artworkIndex > -1) {
-        mockArtworks[artworkIndex].status = 'rejected';
-    }
-    toast({ title: "Obra Rechazada", description: `La obra ${mockArtworks[artworkIndex]?.title || artworkId} ha sido rechazada.`, variant: "destructive" });
-    console.log(`Artwork ${artworkId} rejected and mockArtworks updated.`);
+    // Update global mockArtworks array and save to localStorage
+    const updatedGlobalArtworks = globalMockArtworks.map(art =>
+      art.id === artworkId ? { ...art, status: 'rejected' } : art
+    );
+    updateAndSaveArtworks(updatedGlobalArtworks);
+    const rejectedArtworkTitle = updatedGlobalArtworks.find(art => art.id === artworkId)?.title || artworkId;
+    toast({ title: "Obra Rechazada", description: `La obra ${rejectedArtworkTitle} ha sido rechazada.`, variant: "destructive" });
   };
 
 
@@ -234,5 +244,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
