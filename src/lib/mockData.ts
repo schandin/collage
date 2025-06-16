@@ -68,9 +68,10 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     name: 'Priority',
     pricePerMonth: 20,
     photoLimit: 100,
-    features: ['Hasta 100 fotos en galería', 'Panel de control', 'Soporte premium 24/7', 'Promoción destacada en portada y redes']
+    features: ['Hasta 100 fotos en galería', 'Panel de control', 'Soporte por Chatbot', 'Promoción destacada en portada y redes']
   }
 ];
+
 
 
 
