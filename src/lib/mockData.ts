@@ -52,7 +52,7 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'plan1',
     name: 'Básico',
-    pricePerMonth: 5,
+    pricePerMonth: 6,
     photoLimit: 20,
     features: ['Hasta 20 obras en galería', 'Panel de control', 'Soporte por email']
   },
@@ -71,3 +71,4 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     features: ['Hasta 100 fotos en galería', 'Panel de control completo', 'Soporte premium 24/7', 'Promoción destacada en portada y redes']
   }
 ];
+
