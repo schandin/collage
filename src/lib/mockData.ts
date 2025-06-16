@@ -44,7 +44,7 @@ export const mockArtists: Artist[] = [
     bio: 'Collages que fusionan la cultura pop con la crítica social, utilizando colores vibrantes y mensajes directos.',
     artworks: mockArtworks.filter(art => art.artistId === 'artist3'),
     dataAiHint: 'woman artist',
-    status: 'pending_approval', 
+    status: 'active', 
   },
 ];
 
@@ -68,9 +68,10 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     name: 'Priority',
     pricePerMonth: 25,
     photoLimit: 100,
-    features: ['Hasta 100 fotos en galería', 'Panel de control', 'Soporte por Chatbot', 'Promoción en newsletter']
+    features: ['Hasta 100 fotos en galería', 'Panel de control', 'Soporte por Chatbot', 'Promoción en newsletter', 'Uso de la App de Collage']
   }
 ];
+
 
 
 
