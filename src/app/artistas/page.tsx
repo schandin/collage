@@ -1,3 +1,6 @@
+
+"use client";
+
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import ArtistCard from '@/app/components/ArtistCard';
@@ -7,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Search, Users } from 'lucide-react';
 
 export default function ArtistasPage() {
-  // In a real app, you'd fetch artists, possibly with pagination and filtering
+  // Al ser un Client Component, mockArtists se leerá en cada renderización.
+  // Si mockArtists es modificado globalmente, esta página reflejará esos cambios.
   const artists = mockArtists.filter(a => a.status === 'active');
 
   return (
