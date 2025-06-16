@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -13,15 +14,16 @@ import { mockArtists, mockArtworks } from '@/lib/mockData';
 import type { Artist, Artwork } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import { useToast } from '@/hooks/use-toast';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [artists, setArtists] = useState<Artist[]>(mockArtists);
-  const [artworks, setArtworks] = useState<Artwork[]>(mockArtworks);
+  const { toast } = useToast();
+  const [artists, setArtists] = useState<Artist[]>(() => [...mockArtists]); // Initialize with a copy
+  const [artworks, setArtworks] = useState<Artwork[]>(() => [...mockArtworks]); // Initialize with a copy
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Simple mock authentication check
     const authStatus = localStorage.getItem('isAdminAuthenticated');
     if (authStatus !== 'true') {
       router.push('/admin/login');
@@ -31,23 +33,55 @@ export default function AdminDashboardPage() {
   }, [router]);
 
   const handleApproveArtist = (artistId: string) => {
+    // Update local state for admin UI
     setArtists(prev => prev.map(a => a.id === artistId ? { ...a, status: 'active' } : a));
-    console.log(`Artist ${artistId} approved.`);
+    
+    // Update global mockArtists array
+    const artistIndex = mockArtists.findIndex(a => a.id === artistId);
+    if (artistIndex > -1) {
+      mockArtists[artistIndex].status = 'active';
+    }
+    toast({ title: "Artista Aprobado", description: `El artista ${mockArtists[artistIndex]?.name || artistId} ahora está activo.` });
+    console.log(`Artist ${artistId} approved and mockArtists updated.`);
   };
 
   const handleBlockArtist = (artistId: string) => {
+    // Update local state for admin UI
     setArtists(prev => prev.map(a => a.id === artistId ? { ...a, status: 'blocked' } : a));
-    console.log(`Artist ${artistId} blocked.`);
+
+    // Update global mockArtists array
+    const artistIndex = mockArtists.findIndex(a => a.id === artistId);
+    if (artistIndex > -1) {
+      mockArtists[artistIndex].status = 'blocked';
+    }
+    toast({ title: "Artista Bloqueado", description: `El artista ${mockArtists[artistIndex]?.name || artistId} ha sido bloqueado.`, variant: "destructive" });
+    console.log(`Artist ${artistId} blocked and mockArtists updated.`);
   };
   
   const handleApproveArtwork = (artworkId: string) => {
+    // Update local state for admin UI
     setArtworks(prev => prev.map(art => art.id === artworkId ? { ...art, status: 'approved' } : art));
-    console.log(`Artwork ${artworkId} approved.`);
+
+    // Update global mockArtworks array
+    const artworkIndex = mockArtworks.findIndex(art => art.id === artworkId);
+    if (artworkIndex > -1) {
+        mockArtworks[artworkIndex].status = 'approved';
+    }
+    toast({ title: "Obra Aprobada", description: `La obra ${mockArtworks[artworkIndex]?.title || artworkId} ha sido aprobada.` });
+    console.log(`Artwork ${artworkId} approved and mockArtworks updated.`);
   };
 
   const handleRejectArtwork = (artworkId: string) => {
-     setArtworks(prev => prev.map(art => art.id === artworkId ? { ...art, status: 'rejected' } : art));
-    console.log(`Artwork ${artworkId} rejected.`);
+    // Update local state for admin UI
+    setArtworks(prev => prev.map(art => art.id === artworkId ? { ...art, status: 'rejected' } : art));
+    
+    // Update global mockArtworks array
+    const artworkIndex = mockArtworks.findIndex(art => art.id === artworkId);
+    if (artworkIndex > -1) {
+        mockArtworks[artworkIndex].status = 'rejected';
+    }
+    toast({ title: "Obra Rechazada", description: `La obra ${mockArtworks[artworkIndex]?.title || artworkId} ha sido rechazada.`, variant: "destructive" });
+    console.log(`Artwork ${artworkId} rejected and mockArtworks updated.`);
   };
 
 
@@ -59,6 +93,7 @@ export default function AdminDashboardPage() {
     );
   }
 
+  // Filter pending artworks from the local state 'artworks'
   const pendingArtworks = artworks.filter(art => art.status === 'pending');
 
   return (
@@ -199,3 +234,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
