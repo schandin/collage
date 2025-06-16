@@ -44,7 +44,7 @@ export const mockArtists: Artist[] = [
     bio: 'Collages que fusionan la cultura pop con la crítica social, utilizando colores vibrantes y mensajes directos.',
     artworks: mockArtworks.filter(art => art.artistId === 'artist3'),
     dataAiHint: 'woman artist',
-    status: 'active', 
+    status: 'pending_approval', 
   },
 ];
 
@@ -54,7 +54,7 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     name: 'Básico',
     pricePerMonth: 5,
     photoLimit: 20,
-    features: ['Hasta 20 obras en galería', 'Panel de control básico', 'Soporte por email']
+    features: ['Hasta 20 obras en galería', 'Panel de control', 'Soporte por email']
   },
   {
     id: 'plan2',
@@ -71,4 +71,3 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     features: ['Hasta 100 fotos en galería', 'Panel de control completo', 'Soporte premium 24/7', 'Promoción destacada en portada y redes']
   }
 ];
-
