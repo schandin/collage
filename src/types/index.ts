@@ -10,6 +10,8 @@ export interface Artwork {
   uploadDate?: string;
   status?: 'pending' | 'approved' | 'rejected';
   dataAiHint?: string;
+  size?: string; // Nuevo campo
+  technique?: string; // Nuevo campo
 }
 
 export interface Artist {
@@ -27,7 +29,7 @@ export interface Artist {
   bio?: string;
   artworks: Artwork[];
   dataAiHint?: string;
-  status?: 'active' | 'pending_approval' | 'blocked' | 'profile_incomplete'; // Added 'profile_incomplete'
+  status?: 'active' | 'pending_approval' | 'blocked' | 'profile_incomplete';
   subscriptionPlanId?: string; 
 }
 

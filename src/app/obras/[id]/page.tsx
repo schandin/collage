@@ -11,14 +11,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Palette, UserCircle, DollarSign, ShoppingCart, MessageSquare, Loader2 } from 'lucide-react';
+import { ArrowLeft, Palette, UserCircle, DollarSign, ShoppingCart, MessageSquare, Loader2, Ruler, Brush } from 'lucide-react';
 
 export default function ArtworkDetailPage({ params }: { params: { id: string } }) {
   const [artwork, setArtwork] = useState<ArtworkType | null>(null);
   const [artist, setArtist] = useState<ArtistType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // useParams hook is not needed if params are passed as props.
-  // const routeParams = useParams(); 
 
   useEffect(() => {
     setIsLoading(true);
@@ -130,10 +128,30 @@ export default function ArtworkDetailPage({ params }: { params: { id: string } }
                 
                 <div className="mt-8 pt-6 border-t">
                     <h3 className="text-xl font-headline text-primary mb-3">Detalles Adicionales</h3>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                        <li><span className="font-medium text-foreground">Artista:</span> {artist.name}</li>
-                        <li><span className="font-medium text-foreground">País:</span> {artist.country}</li>
-                        <li><span className="font-medium text-foreground">Subido:</span> {artwork.uploadDate ? new Date(artwork.uploadDate).toLocaleDateString() : 'N/A'}</li>
+                    <ul className="text-sm text-muted-foreground space-y-1.5">
+                        <li>
+                            <UserCircle className="w-4 h-4 mr-2 inline-block text-accent align-middle" />
+                            <span className="font-medium text-foreground align-middle">Artista:</span> {artist.name}
+                        </li>
+                        <li>
+                            <Palette className="w-4 h-4 mr-2 inline-block text-accent align-middle" />
+                            <span className="font-medium text-foreground align-middle">País:</span> {artist.country}
+                        </li>
+                        {artwork.size && (
+                            <li>
+                                <Ruler className="w-4 h-4 mr-2 inline-block text-accent align-middle" />
+                                <span className="font-medium text-foreground align-middle">Tamaño:</span> {artwork.size}
+                            </li>
+                        )}
+                        {artwork.technique && (
+                            <li>
+                                <Brush className="w-4 h-4 mr-2 inline-block text-accent align-middle" />
+                                <span className="font-medium text-foreground align-middle">Técnica:</span> {artwork.technique}
+                            </li>
+                        )}
+                        <li>
+                            <span className="font-medium text-foreground align-middle">Subido:</span> {artwork.uploadDate ? new Date(artwork.uploadDate).toLocaleDateString() : 'N/A'}
+                        </li>
                     </ul>
                 </div>
               </CardContent>

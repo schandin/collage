@@ -3,11 +3,11 @@ import type { Artist, Artwork, SubscriptionPlan } from '@/types';
 
 // Default data if nothing is in localStorage
 const defaultMockArtworks: Artwork[] = [
-  { id: 'art1', title: 'Sueños Entrelazados', imageUrl: 'https://placehold.co/600x400.png', artistId: 'artist1', artistName: 'Elena Rodriguez', price: 150, description: 'Un collage que explora la interconexión de los sueños y la realidad.', uploadDate: '2024-05-01', status: 'approved', dataAiHint: 'abstract collage' },
-  { id: 'art2', title: 'Ciudad Fragmentada', imageUrl: 'https://placehold.co/600x450.png', artistId: 'artist1', artistName: 'Elena Rodriguez', price: 200, description: 'Representación de la vida urbana a través de fragmentos de revistas y texturas.', uploadDate: '2024-05-10', status: 'approved', dataAiHint: 'urban collage' },
-  { id: 'art3', title: 'Naturaleza Viva', imageUrl: 'https://placehold.co/500x700.png', artistId: 'artist2', artistName: 'Carlos Gomez', price: 120, description: 'Collage vibrante con elementos orgánicos y colores terrosos.', uploadDate: '2024-04-20', status: 'approved', dataAiHint: 'nature collage' },
-  { id: 'art4', title: 'Retrato Interior', imageUrl: 'https://placehold.co/400x600.png', artistId: 'artist2', artistName: 'Carlos Gomez', price: 180, description: 'Una mirada introspectiva a través de la superposición de imágenes y símbolos.', uploadDate: '2024-04-25', status: 'pending', dataAiHint: 'portrait collage' },
-  { id: 'art5', title: 'Cosmos Onírico', imageUrl: 'https://placehold.co/700x500.png', artistId: 'artist3', artistName: 'Ana Silva', price: 250, description: 'Exploración del universo y los sueños mediante técnicas mixtas.', uploadDate: '2024-05-15', status: 'approved', dataAiHint: 'space collage' },
+  { id: 'art1', title: 'Sueños Entrelazados', imageUrl: 'https://placehold.co/600x400.png', artistId: 'artist1', artistName: 'Elena Rodriguez', price: 150, description: 'Un collage que explora la interconexión de los sueños y la realidad.', uploadDate: '2024-05-01', status: 'approved', dataAiHint: 'abstract collage', size: '50x70 cm', technique: 'Collage analógico y digital' },
+  { id: 'art2', title: 'Ciudad Fragmentada', imageUrl: 'https://placehold.co/600x450.png', artistId: 'artist1', artistName: 'Elena Rodriguez', price: 200, description: 'Representación de la vida urbana a través de fragmentos de revistas y texturas.', uploadDate: '2024-05-10', status: 'approved', dataAiHint: 'urban collage', size: '60x45 cm', technique: 'Collage sobre madera' },
+  { id: 'art3', title: 'Naturaleza Viva', imageUrl: 'https://placehold.co/500x700.png', artistId: 'artist2', artistName: 'Carlos Gomez', price: 120, description: 'Collage vibrante con elementos orgánicos y colores terrosos.', uploadDate: '2024-04-20', status: 'approved', dataAiHint: 'nature collage', technique: 'Técnica mixta' },
+  { id: 'art4', title: 'Retrato Interior', imageUrl: 'https://placehold.co/400x600.png', artistId: 'artist2', artistName: 'Carlos Gomez', price: 180, description: 'Una mirada introspectiva a través de la superposición de imágenes y símbolos.', uploadDate: '2024-04-25', status: 'pending', dataAiHint: 'portrait collage', size: '30x40 cm' },
+  { id: 'art5', title: 'Cosmos Onírico', imageUrl: 'https://placehold.co/700x500.png', artistId: 'artist3', artistName: 'Ana Silva', price: 250, description: 'Exploración del universo y los sueños mediante técnicas mixtas.', uploadDate: '2024-05-15', status: 'approved', dataAiHint: 'space collage', technique: 'Acrílico y collage' },
   { id: 'art6', title: 'Memorias Futuras', imageUrl: 'https://placehold.co/600x600.png', artistId: 'artist3', artistName: 'Ana Silva', description: 'Una pieza que juega con la nostalgia y las visiones del porvenir.', uploadDate: '2024-05-18', status: 'rejected', dataAiHint: 'vintage collage' },
 ];
 
@@ -21,10 +21,10 @@ const defaultMockArtists: Artist[] = [
     password: 'password123',
     socialMedia: { instagram: 'elena_art', facebook: 'elena.art.fb' },
     bio: 'Artista visual especializada en collage analógico y digital. Mi obra explora la feminidad y la naturaleza.',
-    artworks: defaultMockArtworks.filter(art => art.artistId === 'artist1'),
+    artworks: [], // Se poblará dinámicamente
     dataAiHint: 'artist portrait',
     status: 'active',
-    subscriptionPlanId: 'plan2', // Avanzado
+    subscriptionPlanId: 'plan2', 
   },
   {
     id: 'artist2',
@@ -35,10 +35,10 @@ const defaultMockArtists: Artist[] = [
     password: 'password123',
     socialMedia: { twitter: 'carlosg_collage' },
     bio: 'Apasionado por el collage surrealista, combino elementos vintage con técnicas modernas para crear mundos oníricos.',
-    artworks: defaultMockArtworks.filter(art => art.artistId === 'artist2'),
+    artworks: [], // Se poblará dinámicamente
     dataAiHint: 'artist studio',
     status: 'active',
-    subscriptionPlanId: 'plan2', // Avanzado
+    subscriptionPlanId: 'plan2', 
   },
   {
     id: 'artist3',
@@ -48,10 +48,10 @@ const defaultMockArtists: Artist[] = [
     email: 'ana.silva@example.com',
     password: 'password123',
     bio: 'Collages que fusionan la cultura pop con la crítica social, utilizando colores vibrantes y mensajes directos.',
-    artworks: defaultMockArtworks.filter(art => art.artistId === 'artist3'),
+    artworks: [], // Se poblará dinámicamente
     dataAiHint: 'woman artist',
-    status: 'pending_approval', // o active para que aparezca en otros listados
-    subscriptionPlanId: 'plan1', // Básico
+    status: 'pending_approval',
+    subscriptionPlanId: 'plan1', 
   },
 ];
 
@@ -92,6 +92,12 @@ export const getMockArtists = (): Artist[] => JSON.parse(JSON.stringify(_mockArt
 
 // Function to re-synchronize artist names in artworks and artwork lists in artists
 const reSyncData = () => {
+  // First, ensure all artists have an artworks array
+   _mockArtistsGlobal = _mockArtistsGlobal.map(artist => ({
+    ...artist,
+    artworks: artist.artworks || [] 
+  }));
+
   _mockArtistsGlobal = _mockArtistsGlobal.map(artist => ({
     ...artist,
     artworks: _mockArtworksGlobal.filter(artwork => artwork.artistId === artist.id)
@@ -123,17 +129,17 @@ if (typeof window !== 'undefined') {
 
 // Helper functions to update and save, ensuring data consistency
 export const updateAndSaveArtists = (updatedArtists: Artist[]) => {
-  _mockArtistsGlobal = [...updatedArtists]; // Directly update the in-memory global store
-  reSyncData(); // Re-sync dependent data (like artistName in artworks)
-  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); // Save updated artists
-  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal); // Save potentially updated artworks (due to artistName change)
+  _mockArtistsGlobal = [...updatedArtists]; 
+  reSyncData(); 
+  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); 
+  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal); 
 };
 
 export const updateAndSaveArtworks = (updatedArtworks: Artwork[]) => {
-  _mockArtworksGlobal = [...updatedArtworks]; // Directly update the in-memory global store
-  reSyncData(); // Re-sync dependent data (like artwork list in artists)
-  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal); // Save updated artworks
-  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); // Save potentially updated artists (due to artwork list change)
+  _mockArtworksGlobal = [...updatedArtworks]; 
+  reSyncData(); 
+  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal); 
+  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); 
 };
 
 

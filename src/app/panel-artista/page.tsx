@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadCloud, Edit3, UserCircle, Scissors, DollarSign, Trash2, Eye, Save, Loader2, ImagePlus, X } from 'lucide-react';
+import { UploadCloud, Edit3, UserCircle, Scissors, DollarSign, Trash2, Eye, Save, Loader2, ImagePlus, X, Ruler, Brush } from 'lucide-react';
 import Image from 'next/image';
 import type { Artwork, Artist } from '@/types';
 import { 
@@ -39,6 +39,8 @@ export default function PanelArtistaPage() {
     imageUrl: '', 
     price: '',
     dataAiHint: '',
+    size: '', // Nuevo campo
+    technique: '', // Nuevo campo
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -98,12 +100,12 @@ export default function PanelArtistaPage() {
         name: existingArtist.name || '',
         country: existingArtist.country || '',
         bio: existingArtist.bio || '',
-        email: existingArtist.email, // Email should already be set from pre-registration
+        email: existingArtist.email,
         profileImageUrl: existingArtist.profileImageUrl || '', 
         dataAiHint: existingArtist.dataAiHint || '',
         instagram: existingArtist.socialMedia?.instagram || '',
         facebook: existingArtist.socialMedia?.facebook || '',
-        subscriptionPlanId: existingArtist.subscriptionPlanId || '',
+        subscriptionPlanId: existingArtist.subscriptionPlanId || localStorage.getItem('pendingSubscriptionPlanId') || '',
       });
       if (existingArtist.profileImageUrl) { 
           setProfileImagePreviewUrl(existingArtist.profileImageUrl);
@@ -118,8 +120,6 @@ export default function PanelArtistaPage() {
       }
 
     } else {
-      // This case should ideally not happen if redirection from payment page is correct
-      // and artist ID is always valid.
        toast({
         title: "Error de Perfil",
         description: "No se pudo cargar tu perfil. Intenta iniciar sesión de nuevo.",
@@ -127,6 +127,7 @@ export default function PanelArtistaPage() {
       });
       localStorage.removeItem('isArtistAuthenticated');
       localStorage.removeItem('currentArtistId');
+      localStorage.removeItem('pendingSubscriptionPlanId');
       router.push('/artistas/login');
     }
     
@@ -134,7 +135,7 @@ export default function PanelArtistaPage() {
   }, [router, toast]);
 
   const resetArtworkForm = () => {
-    setArtworkForm({ title: '', description: '', imageUrl: '', price: '', dataAiHint: '' });
+    setArtworkForm({ title: '', description: '', imageUrl: '', price: '', dataAiHint: '', size: '', technique: '' });
     setEditingArtwork(null);
     setSelectedFile(null);
     setImagePreviewUrl(null);
@@ -150,6 +151,8 @@ export default function PanelArtistaPage() {
       imageUrl: artwork.imageUrl, 
       price: artwork.price?.toString() || '',
       dataAiHint: artwork.dataAiHint || '',
+      size: artwork.size || '',
+      technique: artwork.technique || '',
     });
     setSelectedFile(null); 
     setImagePreviewUrl(artwork.imageUrl); 
@@ -329,23 +332,25 @@ export default function PanelArtistaPage() {
       finalProfileImageUrl = profileImagePreviewUrl || 'https://placehold.co/300x300.png';
     }
 
+    const planIdFromStorage = localStorage.getItem('pendingSubscriptionPlanId');
+
     const updatedGlobalArtistsList = currentGlobalArtists.map(a => {
       if (a.id === currentArtistId) {
+        const newStatus = a.status === 'profile_incomplete' ? 'pending_approval' : a.status;
         return {
           ...a,
           name: profileForm.name,
           country: profileForm.country,
           bio: profileForm.bio,
-          email: profileForm.email, // Email might be updated here too
+          email: profileForm.email,
           profileImageUrl: finalProfileImageUrl,
           dataAiHint: profileForm.dataAiHint,
           socialMedia: {
             instagram: profileForm.instagram,
             facebook: profileForm.facebook,
           },
-          // If status was 'profile_incomplete', change to 'pending_approval'. Otherwise, keep current status.
-          status: a.status === 'profile_incomplete' ? 'pending_approval' : a.status, 
-          subscriptionPlanId: profileForm.subscriptionPlanId || a.subscriptionPlanId,
+          status: newStatus, 
+          subscriptionPlanId: profileForm.subscriptionPlanId || a.subscriptionPlanId || planIdFromStorage || '',
         };
       }
       return a;
@@ -353,8 +358,11 @@ export default function PanelArtistaPage() {
 
     updateAndSaveArtists(updatedGlobalArtistsList);
     
-    const newStatus = initialArtistStatus === 'profile_incomplete' ? 'pending_approval' : initialArtistStatus;
-    setInitialArtistStatus(newStatus); // Update initial status for subsequent saves
+    if (planIdFromStorage) {
+      localStorage.removeItem('pendingSubscriptionPlanId');
+    }
+    const currentArtist = updatedGlobalArtistsList.find(a => a.id === currentArtistId);
+    if (currentArtist) setInitialArtistStatus(currentArtist.status || null);
 
     toast({ title: "Perfil guardado", description: "Tu información ha sido actualizada. Si completaste tu perfil por primera vez, pasará a revisión." });
   };
@@ -413,6 +421,8 @@ export default function PanelArtistaPage() {
             imageUrl: finalImageUrl, 
             price: parseFloat(artworkForm.price) || undefined,
             dataAiHint: artworkForm.dataAiHint,
+            size: artworkForm.size,
+            technique: artworkForm.technique,
             status: (originalStatus === 'approved' && imageChanged) ? 'pending' : originalStatus,
           };
         }
@@ -432,6 +442,8 @@ export default function PanelArtistaPage() {
         uploadDate: new Date().toISOString().split('T')[0],
         status: 'pending', 
         dataAiHint: artworkForm.dataAiHint,
+        size: artworkForm.size,
+        technique: artworkForm.technique,
       };
       updatedGlobalArtworksList = [...currentGlobalArtworks, newArtwork];
       toast({ title: "Obra subida", description: "Tu obra está pendiente de revisión." });
@@ -469,6 +481,7 @@ export default function PanelArtistaPage() {
           <Button variant="outline" onClick={() => { 
             localStorage.removeItem('isArtistAuthenticated'); 
             localStorage.removeItem('currentArtistId');
+            localStorage.removeItem('pendingSubscriptionPlanId');
             router.push('/');
           }}>
             Cerrar Sesión
@@ -608,6 +621,22 @@ export default function PanelArtistaPage() {
                     <div>
                         <Label htmlFor="artwork-description" className="text-base">Descripción</Label>
                         <Textarea id="artwork-description" placeholder="Describe tu obra, técnicas, inspiración..." value={artworkForm.description} onChange={handleArtworkFormChange} className="mt-1 text-base" rows={4}/>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                          <Label htmlFor="artwork-size" className="text-base">Tamaño (ej: 50x70 cm)</Label>
+                          <div className="relative mt-1">
+                              <Ruler className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input id="artwork-size" placeholder="50x70 cm" value={artworkForm.size} onChange={handleArtworkFormChange} className="pl-10 text-base" />
+                          </div>
+                      </div>
+                      <div>
+                          <Label htmlFor="artwork-technique" className="text-base">Técnica (ej: Collage y acrílico)</Label>
+                          <div className="relative mt-1">
+                              <Brush className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                              <Input id="artwork-technique" placeholder="Collage analógico" value={artworkForm.technique} onChange={handleArtworkFormChange} className="pl-10 text-base" />
+                          </div>
+                      </div>
                     </div>
                     <div>
                         <Label htmlFor="artwork-price" className="text-base">Precio (USD)</Label>
