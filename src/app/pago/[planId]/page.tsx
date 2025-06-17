@@ -30,31 +30,39 @@ export default function PaymentPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState('');
 
+  const planIdFromParams = typeof params?.planId === 'string' ? params.planId : null;
 
   useEffect(() => {
-    if (params === null) {
-      setIsLoading(true); 
-      setSelectedPlan(undefined); 
-      return;
+    setIsLoading(true); 
+
+    if (!planIdFromParams) {
+      toast({
+        title: "Error de Ruta",
+        description: "No se pudo identificar el plan de suscripción. Serás redirigido.",
+        variant: "destructive",
+      });
+      router.push('/suscripciones');
+      // No need to explicitly setIsLoading(false) here if redirecting,
+      // but if there were a state where it didn't redirect, it would be needed.
+      return; 
     }
 
-    const currentPlanId = typeof params.planId === 'string' ? params.planId : '';
-    const foundPlan = mockSubscriptionPlans.find(p => p.id === currentPlanId);
+    const foundPlan = mockSubscriptionPlans.find(p => p.id === planIdFromParams);
 
-    if (currentPlanId && !foundPlan) { 
+    if (!foundPlan) { 
       toast({
         title: "Plan no encontrado",
-        description: "El plan de suscripción seleccionado no es válido.",
+        description: "El plan de suscripción seleccionado no es válido. Serás redirigido.",
         variant: "destructive",
       });
       router.push('/suscripciones');
       return; 
     }
     
-    setSelectedPlan(foundPlan || null); 
+    setSelectedPlan(foundPlan); 
     setIsLoading(false);
 
-  }, [params, router, toast]);
+  }, [planIdFromParams, router, toast]);
 
   const handlePaymentConfirmation = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -87,9 +95,9 @@ export default function PaymentPage() {
     const newArtistId = `artist-${Date.now()}`;
     const newArtist: Artist = {
       id: newArtistId,
-      name: '', // Se completará en el panel de artista
-      country: '', // Se completará en el panel de artista
-      profileImageUrl: '', // Se completará en el panel de artista
+      name: '', 
+      country: '', 
+      profileImageUrl: '', 
       email: email,
       password: password,
       artworks: [],
@@ -104,7 +112,7 @@ export default function PaymentPage() {
     
     localStorage.setItem('isArtistAuthenticated', 'true');
     localStorage.setItem('currentArtistId', newArtistId);
-    localStorage.removeItem('pendingSubscriptionPlanId'); // No longer needed here
+    // localStorage.removeItem('pendingSubscriptionPlanId'); // This was used before direct planId in newArtist. Not needed now.
     
     toast({
       title: "¡Pre-registro exitoso!",
@@ -127,6 +135,8 @@ export default function PaymentPage() {
   }
 
   if (!selectedPlan) { 
+    // This case should ideally be handled by the useEffect redirecting,
+    // but as a fallback or if redirects are slow.
     return (
       <div className="flex flex-col min-h-screen">
         <Header />

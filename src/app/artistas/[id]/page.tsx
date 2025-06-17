@@ -23,17 +23,20 @@ export default function ArtistProfilePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  const artistIdFromParams = typeof params?.id === 'string' ? params.id : null;
+
   useEffect(() => {
     setIsLoading(true);
     setArtist(null);
     setArtistArtworks([]);
     
-    if (params === null) {
+    if (!artistIdFromParams) {
       setIsLoading(false);
+      // Artist not found or params not available yet, main render will handle "Artista no encontrado"
       return;
     }
 
-    const currentArtistId = typeof params.id === 'string' ? params.id : null;
+    const currentArtistId = artistIdFromParams;
 
     if (currentArtistId) {
       const currentGlobalArtists = getMockArtists();
@@ -49,11 +52,12 @@ export default function ArtistProfilePage() {
         setArtistArtworks([]);
       }
     } else {
+        // This case should be covered by !artistIdFromParams check above
         setArtist(null); 
         setArtistArtworks([]);
     }
     setIsLoading(false);
-  }, [params]); 
+  }, [artistIdFromParams]); 
 
   const handleOpenModal = (artwork: ArtworkType) => {
     setSelectedArtwork(artwork);
