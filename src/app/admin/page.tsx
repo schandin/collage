@@ -9,24 +9,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, Edit, Trash2, ShieldCheck, Search, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIcon } from 'lucide-react';
+import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck } from 'lucide-react'; // Renamed ImageIcon to avoid conflict
 import { 
-  mockArtists as globalMockArtists, 
-  mockArtworks as globalMockArtworks,
+  mockArtists, // Use directly
+  mockArtworks, // Use directly
   updateAndSaveArtists,
   updateAndSaveArtworks
 } from '@/lib/mockData';
 import type { Artist, Artwork } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import Image from 'next/image';
+import Image from 'next/image'; // Next.js Image component
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
-  // Initialize local state from the global, localStorage-backed data
-  const [artists, setArtists] = useState<Artist[]>(() => globalMockArtists.map(a => ({...a})));
-  const [artworks, setArtworks] = useState<Artwork[]>(() => globalMockArtworks.map(art => ({...art})));
+  
+  const [artistsForUI, setArtistsForUI] = useState<Artist[]>([]);
+  const [pendingArtworksForUI, setPendingArtworksForUI] = useState<Artwork[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -35,65 +35,61 @@ export default function AdminDashboardPage() {
       router.push('/admin/login');
     } else {
       setIsAuthenticated(true);
-      // Re-sync local state with global state on mount, in case it changed elsewhere or on initial load
-      setArtists(globalMockArtists.map(a => ({...a})));
-      setArtworks(globalMockArtworks.map(art => ({...art})));
+      // Initial sync of UI state with global mock data
+      setArtistsForUI(mockArtists.map(a => ({...a})));
+      const currentArtworksFromGlobal = mockArtworks.map(art => ({...art}));
+      setPendingArtworksForUI(currentArtworksFromGlobal.filter(art => art.status === 'pending'));
     }
   }, [router]);
 
+  const refreshArtworksUI = () => {
+    const currentArtworksFromGlobal = mockArtworks.map(art => ({...art}));
+    setPendingArtworksForUI(currentArtworksFromGlobal.filter(art => art.status === 'pending'));
+  };
+
   const handleApproveArtist = (artistId: string) => {
-    // Update local state for admin UI
-    setArtists(prev => prev.map(a => a.id === artistId ? { ...a, status: 'active' } : a));
-    
-    // Update global mockArtists array and save to localStorage
-    const updatedGlobalArtists = globalMockArtists.map(a =>
+    const updatedGlobalArtists = mockArtists.map(a =>
       a.id === artistId ? { ...a, status: 'active' } : a
     );
     updateAndSaveArtists(updatedGlobalArtists);
+    setArtistsForUI(updatedGlobalArtists.map(a => ({...a}))); // Update local UI state
 
     const approvedArtistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
     toast({ title: "Artista Aprobado", description: `El artista ${approvedArtistName} ahora está activo.` });
   };
 
   const handleBlockArtist = (artistId: string) => {
-    // Update local state for admin UI
-    setArtists(prev => prev.map(a => a.id === artistId ? { ...a, status: 'blocked' } : a));
-
-    // Update global mockArtists array and save to localStorage
-    const updatedGlobalArtists = globalMockArtists.map(a =>
+    const updatedGlobalArtists = mockArtists.map(a =>
       a.id === artistId ? { ...a, status: 'blocked' } : a
     );
     updateAndSaveArtists(updatedGlobalArtists);
+    setArtistsForUI(updatedGlobalArtists.map(a => ({...a}))); // Update local UI state
+
     const blockedArtistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
     toast({ title: "Artista Bloqueado", description: `El artista ${blockedArtistName} ha sido bloqueado.`, variant: "destructive" });
   };
   
   const handleApproveArtwork = (artworkId: string) => {
-    // Update local state for admin UI
-    setArtworks(prev => prev.map(art => art.id === artworkId ? { ...art, status: 'approved' } : art));
-
-    // Update global mockArtworks array and save to localStorage
-    const updatedGlobalArtworks = globalMockArtworks.map(art =>
+    const updatedGlobalArtworks = mockArtworks.map(art =>
       art.id === artworkId ? { ...art, status: 'approved' } : art
     );
     updateAndSaveArtworks(updatedGlobalArtworks);
+    refreshArtworksUI(); // Refresh local UI state for pending artworks
+
     const approvedArtworkTitle = updatedGlobalArtworks.find(art => art.id === artworkId)?.title || artworkId;
     toast({ title: "Obra Aprobada", description: `La obra ${approvedArtworkTitle} ha sido aprobada.` });
   };
 
   const handleRejectArtwork = (artworkId: string) => {
-    // Update local state for admin UI
-    setArtworks(prev => prev.map(art => art.id === artworkId ? { ...art, status: 'rejected' } : art));
-    
-    // Update global mockArtworks array and save to localStorage
-    const updatedGlobalArtworks = globalMockArtworks.map(art =>
+    const updatedGlobalArtworks = mockArtworks.map(art =>
       art.id === artworkId ? { ...art, status: 'rejected' } : art
     );
     updateAndSaveArtworks(updatedGlobalArtworks);
+    refreshArtworksUI(); // Refresh local UI state for pending artworks
+    
     const rejectedArtworkTitle = updatedGlobalArtworks.find(art => art.id === artworkId)?.title || artworkId;
     toast({ title: "Obra Rechazada", description: `La obra ${rejectedArtworkTitle} ha sido rechazada.`, variant: "destructive" });
   };
-
 
   if (!isAuthenticated) {
     return (
@@ -102,9 +98,6 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
-
-  // Filter pending artworks from the local state 'artworks'
-  const pendingArtworks = artworks.filter(art => art.status === 'pending');
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -120,7 +113,7 @@ export default function AdminDashboardPage() {
         <Tabs defaultValue="manage-artists" className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 mb-6">
             <TabsTrigger value="manage-artists" className="py-3"><Users className="w-5 h-5 mr-2" />Gestionar Artistas</TabsTrigger>
-            <TabsTrigger value="moderate-content" className="py-3"><ImageIcon className="w-5 h-5 mr-2" />Moderar Obras</TabsTrigger>
+            <TabsTrigger value="moderate-content" className="py-3"><ImageIconLucide className="w-5 h-5 mr-2" />Moderar Obras</TabsTrigger>
             <TabsTrigger value="verify-payments" className="py-3"><DollarSign className="w-5 h-5 mr-2" />Verificar Pagos</TabsTrigger>
             <TabsTrigger value="site-settings" className="py-3"><ShieldCheck className="w-5 h-5 mr-2" />Configuración</TabsTrigger>
           </TabsList>
@@ -143,7 +136,7 @@ export default function AdminDashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {artists.map((artist) => (
+                    {artistsForUI.map((artist) => (
                       <TableRow key={artist.id}>
                         <TableCell className="font-medium">{artist.name}</TableCell>
                         <TableCell>{artist.country}</TableCell>
@@ -177,9 +170,9 @@ export default function AdminDashboardPage() {
                 <CardDescription>Revisa y aprueba o rechaza las obras subidas por los artistas.</CardDescription>
               </CardHeader>
               <CardContent>
-                {pendingArtworks.length > 0 ? (
+                {pendingArtworksForUI.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {pendingArtworks.map((artwork) => (
+                  {pendingArtworksForUI.map((artwork) => (
                     <Card key={artwork.id} className="overflow-hidden">
                        <div className="relative aspect-[4/3] w-full">
                          <Image src={artwork.imageUrl} alt={artwork.title} fill style={{ objectFit: "cover" }} data-ai-hint={artwork.dataAiHint || "pending art"} />
