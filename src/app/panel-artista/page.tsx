@@ -106,6 +106,7 @@ export default function PanelArtistaPage() {
       }
       setArtistArtworks(currentGlobalArtworks.filter(art => art.artistId === artistIdFromStorage));
     } else if (artistIdFromStorage.startsWith('newArtist-')) {
+      // For new artists, initialize form with empty or default values, especially email
       setProfileForm({ name: '', country: '', bio: '', email: '', profileImageUrl: '', dataAiHint: '', instagram: '', facebook: '' });
       setArtistArtworks([]);
     }
@@ -286,6 +287,11 @@ export default function PanelArtistaPage() {
   const handleProfileSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!currentArtistId || isProfileImageProcessing) return;
+    if (!profileForm.email || !profileForm.email.includes('@')) {
+      toast({ title: "Email Inválido", description: "Por favor, introduce un email válido para tu perfil.", variant: "destructive" });
+      return;
+    }
+
 
     let finalProfileImageUrl = profileForm.profileImageUrl;
     const currentGlobalArtists = getMockArtists();
@@ -307,7 +313,8 @@ export default function PanelArtistaPage() {
           name: profileForm.name,
           country: profileForm.country,
           bio: profileForm.bio,
-          email: profileForm.email,
+          email: profileForm.email, // Ensure email from form is used
+          password: a.password || (currentArtistId.startsWith('newArtist-') ? "password123" : undefined), // Assign default password if new and no password exists
           profileImageUrl: finalProfileImageUrl,
           dataAiHint: profileForm.dataAiHint,
           socialMedia: {
@@ -320,14 +327,15 @@ export default function PanelArtistaPage() {
       return a;
     });
 
-    if (!artistExists) { 
+    if (!artistExists && currentArtistId.startsWith('newArtist-')) { 
       const newArtist: Artist = {
         id: currentArtistId,
         name: profileForm.name,
         country: profileForm.country,
         profileImageUrl: finalProfileImageUrl,
         dataAiHint: profileForm.dataAiHint,
-        email: profileForm.email,
+        email: profileForm.email, // Crucial: email from form
+        password: "password123", // Default password for new artists
         bio: profileForm.bio,
         artworks: [], 
         socialMedia: {
@@ -339,7 +347,7 @@ export default function PanelArtistaPage() {
       updatedGlobalArtistsList.push(newArtist);
     }
     updateAndSaveArtists(updatedGlobalArtistsList);
-    toast({ title: "Perfil guardado", description: "Tu información ha sido actualizada. Si eres un nuevo artista o cambiaste tu foto, tu perfil pasará a revisión." });
+    toast({ title: "Perfil guardado", description: "Tu información ha sido actualizada. Si eres un nuevo artista o cambiaste tu foto/email, tu perfil pasará a revisión y podrás iniciar sesión con este email y la contraseña 'password123'." });
   };
 
   const handleArtworkSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -359,10 +367,10 @@ export default function PanelArtistaPage() {
     
     const currentGlobalArtists = getMockArtists();
     const artistProfile = currentGlobalArtists.find(a => a.id === currentArtistId);
-    if (!artistProfile) {
+    if (!artistProfile || !artistProfile.email) { // Check if profile (especially email) is saved
         toast({ 
           title: "Guarda tu perfil primero", 
-          description: "Para subir obras, tu perfil de artista debe estar guardado. Ve a la pestaña 'Mi Perfil' y guarda tus datos.", 
+          description: "Para subir obras, tu perfil de artista (incluyendo un email válido) debe estar guardado. Ve a la pestaña 'Mi Perfil' y guarda tus datos.", 
           variant: "destructive"
         });
         return;
@@ -672,7 +680,7 @@ export default function PanelArtistaPage() {
                     <Textarea id="artist-bio" placeholder="Cuéntanos sobre ti y tu arte..." value={profileForm.bio} onChange={handleProfileFormChange} className="mt-1 text-base" rows={4}/>
                   </div>
                   <div>
-                    <Label htmlFor="artist-email" className="text-base">Email de Contacto</Label>
+                    <Label htmlFor="artist-email" className="text-base">Email de Contacto (será tu usuario)</Label>
                     <Input id="artist-email" type="email" placeholder="tu@email.com" value={profileForm.email} onChange={handleProfileFormChange} className="mt-1 text-base" required/>
                   </div>
                   <div>
@@ -699,3 +707,4 @@ export default function PanelArtistaPage() {
     </div>
   );
 }
+

@@ -12,11 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, UserCircle, Eye, EyeOff, UserPlus } from 'lucide-react';
-
-// Mock credentials for artist
-const ARTIST_EMAIL = "artista@example.com";
-const ARTIST_PASSWORD = "password123";
-const EXISTING_ARTIST_ID = "artist1"; // ID for the mock artist Elena Rodriguez
+import { getMockArtists } from '@/lib/mockData'; // Import getMockArtists
 
 export default function ArtistLoginPage() {
   const router = useRouter();
@@ -30,13 +26,38 @@ export default function ArtistLoginPage() {
     e.preventDefault();
     setError('');
 
-    if (email === ARTIST_EMAIL && password === ARTIST_PASSWORD) {
+    const artists = getMockArtists();
+    const foundArtist = artists.find(
+      (artist) => artist.email === email && artist.password === password
+    );
+
+    if (foundArtist) {
+      if (foundArtist.status === 'blocked') {
+        setError('Esta cuenta de artista ha sido bloqueada.');
+        toast({
+          title: "Cuenta Bloqueada",
+          description: "No puedes iniciar sesión. Contacta con el administrador.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (foundArtist.status === 'pending_approval' && !foundArtist.id.startsWith('newArtist-')) {
+         setError('Tu cuenta está pendiente de aprobación por un administrador.');
+         toast({
+           title: "Cuenta Pendiente",
+           description: "Tu perfil está siendo revisado. Podrás iniciar sesión una vez aprobado.",
+           variant: "default", 
+         });
+         return;
+      }
+
+
       toast({
         title: "Inicio de sesión exitoso",
         description: "Redirigiendo a tu panel de artista...",
       });
       localStorage.setItem('isArtistAuthenticated', 'true');
-      localStorage.setItem('currentArtistId', EXISTING_ARTIST_ID); // Set specific artist ID
+      localStorage.setItem('currentArtistId', foundArtist.id); 
       router.push('/panel-artista');
     } else {
       setError('Email o contraseña incorrectos.');
@@ -126,3 +147,4 @@ export default function ArtistLoginPage() {
     </div>
   );
 }
+

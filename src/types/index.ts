@@ -18,6 +18,7 @@ export interface Artist {
   country: string;
   profileImageUrl: string;
   email: string;
+  password?: string; // Added password field
   socialMedia?: {
     instagram?: string;
     facebook?: string;
@@ -36,3 +37,4 @@ export interface SubscriptionPlan {
   photoLimit: number;
   features: string[];
 }
+
