@@ -24,6 +24,7 @@ const defaultMockArtists: Artist[] = [
     artworks: defaultMockArtworks.filter(art => art.artistId === 'artist1'),
     dataAiHint: 'artist portrait',
     status: 'active',
+    subscriptionPlanId: 'plan2', // Avanzado
   },
   {
     id: 'artist2',
@@ -37,6 +38,7 @@ const defaultMockArtists: Artist[] = [
     artworks: defaultMockArtworks.filter(art => art.artistId === 'artist2'),
     dataAiHint: 'artist studio',
     status: 'active',
+    subscriptionPlanId: 'plan2', // Avanzado
   },
   {
     id: 'artist3',
@@ -48,7 +50,8 @@ const defaultMockArtists: Artist[] = [
     bio: 'Collages que fusionan la cultura pop con la crítica social, utilizando colores vibrantes y mensajes directos.',
     artworks: defaultMockArtworks.filter(art => art.artistId === 'artist3'),
     dataAiHint: 'woman artist',
-    status: 'pending_approval',
+    status: 'pending_approval', // o active para que aparezca en otros listados
+    subscriptionPlanId: 'plan1', // Básico
   },
 ];
 
@@ -115,23 +118,24 @@ if (typeof window !== 'undefined') {
     saveToLocalStorage('mockArtistsData', defaultMockArtists);
     _mockArtistsGlobal = defaultMockArtists;
   }
-  reSyncData();
+  reSyncData(); // Ensure data is synced on initial load
 }
 
 // Helper functions to update and save, ensuring data consistency
 export const updateAndSaveArtists = (updatedArtists: Artist[]) => {
-  _mockArtistsGlobal = [...updatedArtists];
-  reSyncData();
-  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal);
-  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal);
+  _mockArtistsGlobal = [...updatedArtists]; // Directly update the in-memory global store
+  reSyncData(); // Re-sync dependent data (like artistName in artworks)
+  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); // Save updated artists
+  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal); // Save potentially updated artworks (due to artistName change)
 };
 
 export const updateAndSaveArtworks = (updatedArtworks: Artwork[]) => {
-  _mockArtworksGlobal = [...updatedArtworks];
-  reSyncData();
-  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal);
-  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal);
+  _mockArtworksGlobal = [...updatedArtworks]; // Directly update the in-memory global store
+  reSyncData(); // Re-sync dependent data (like artwork list in artists)
+  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal); // Save updated artworks
+  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); // Save potentially updated artists (due to artwork list change)
 };
+
 
 export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {
@@ -156,4 +160,3 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     features: ['Hasta 100 fotos en galería', 'Panel de control', 'Soporte por Chatbot', 'Promoción en newsletter', 'Uso de la App de Collage']
   }
 ];
-

@@ -5,19 +5,21 @@ import React, { useState, useEffect } from 'react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import ArtworkFullscreenModal from '@/app/components/ArtworkFullscreenModal';
-import ArtistCard from '@/app/components/ArtistCard';
+// ArtistCard no se usará en la sección modificada, pero se mantiene por si se usa en otro lado.
+// import ArtistCard from '@/app/components/ArtistCard'; 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+// Input no se usará en la sección modificada.
+// import { Input } from '@/components/ui/input'; 
 import { getMockArtworks, getMockArtists } from '@/lib/mockData';
 import type { Artist as ArtistType, Artwork as ArtworkType } from '@/types';
-import { Search, ChevronRight, Palette, Users } from 'lucide-react';
+import { Search, ChevronRight, Palette, Users, Star } from 'lucide-react'; // Star para Galería Avanzada
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Home() {
-  // Use state for artists and artworks to ensure reactivity if data changes
   const [featuredArtists, setFeaturedArtists] = useState<ArtistType[]>([]);
   const [allArtworks, setAllArtworks] = useState<ArtworkType[]>([]);
+  const [advancedArtworksForCarousel, setAdvancedArtworksForCarousel] = useState<ArtworkType[]>([]);
 
   const [selectedArtworkForModal, setSelectedArtworkForModal] = useState<ArtworkType | null>(null);
   const [selectedArtistForModal, setSelectedArtistForModal] = useState<ArtistType | null>(null);
@@ -27,13 +29,28 @@ export default function Home() {
     const currentArtists = getMockArtists();
     const currentArtworks = getMockArtworks();
     
+    // For "Galerías Destacadas de Nuestros Artistas" section
     setFeaturedArtists(currentArtists.filter(art => art.status === 'active').slice(0, 4));
     setAllArtworks(currentArtworks);
-  }, []); // Re-fetch on mount. For live updates, would need a global state manager or more complex effect.
+
+    // For "Galería Avanzada" (new carousel section)
+    const activeArtists = currentArtists.filter(a => a.status === 'active');
+    const advancedTierArtists = activeArtists.filter(a => a.subscriptionPlanId === 'plan2');
+
+    const carouselArtworks: ArtworkType[] = [];
+    advancedTierArtists.forEach(artist => {
+      const artistApprovedArtworks = currentArtworks.filter(
+        art => art.artistId === artist.id && art.status === 'approved'
+      );
+      carouselArtworks.push(...artistApprovedArtworks);
+    });
+    setAdvancedArtworksForCarousel(carouselArtworks);
+
+  }, []);
 
   const handleOpenModal = (artwork: ArtworkType) => {
     setSelectedArtworkForModal(artwork);
-    const artist = getMockArtists().find(a => a.id === artwork.artistId); // Get latest artist data
+    const artist = getMockArtists().find(a => a.id === artwork.artistId);
     setSelectedArtistForModal(artist || null);
     setIsModalOpen(true);
   };
@@ -126,36 +143,45 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Nueva sección "Galería Avanzada" con carrusel de obras */}
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-headline text-primary text-center mb-10">Busca Artistas</h2>
-            <form className="max-w-xl mx-auto flex flex-col sm:flex-row gap-4 mb-12">
-              <Input type="text" placeholder="Nombre del artista" className="flex-grow text-base" aria-label="Nombre del artista" />
-              <Input type="text" placeholder="País" className="flex-grow text-base" aria-label="País del artista" />
-              <Button type="submit" className="bg-primary hover:bg-primary/90 text-base">
-                <Search className="w-5 h-5 mr-2" />
-                Buscar
-              </Button>
-            </form>
-            
-            <div className="flex items-center justify-between mb-10">
-              <h3 className="text-3xl font-headline text-primary flex items-center">
-                <Users className="w-7 h-7 mr-3 text-accent" />
-                Artistas Talentosos
-              </h3>
-              <Button variant="link" asChild className="text-accent hover:text-accent/80">
-                <Link href="/artistas">
-                  <span className="flex items-center">
-                    Ver Todos <ChevronRight className="w-4 h-4 ml-1" />
-                  </span>
-                </Link>
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {featuredArtists.map((artist) => (
-                <ArtistCard key={artist.id} artist={artist} />
-              ))}
-            </div>
+            <h2 className="text-4xl font-headline text-primary text-center mb-10 flex items-center justify-center">
+              <Star className="w-10 h-10 mr-3 text-accent" />
+              Galería Avanzada
+            </h2>
+            {advancedArtworksForCarousel.length > 0 ? (
+              <div className="flex overflow-x-auto space-x-4 pb-4 -mx-1 px-1 scrollbar-thin scrollbar-thumb-accent/70 scrollbar-track-accent/20 rounded-lg">
+                {advancedArtworksForCarousel.map((artwork) => (
+                  <button
+                    key={artwork.id}
+                    onClick={() => handleOpenModal(artwork)}
+                    className="aspect-square relative block w-64 h-64 md:w-72 md:h-72 flex-shrink-0 overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 group"
+                    aria-label={`Ver obra ${artwork.title}`}
+                  >
+                    <Image
+                      src={artwork.imageUrl}
+                      alt={artwork.title}
+                      fill
+                      style={{ objectFit: "cover" }}
+                      className="transition-transform duration-500 ease-in-out group-hover:scale-110"
+                      data-ai-hint={artwork.dataAiHint || "advanced artwork"}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                      <p className="text-white text-sm font-semibold truncate">{artwork.title}</p>
+                      <p className="text-white text-xs truncate">Por {artwork.artistName}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 px-4 border-2 border-dashed border-muted-foreground/30 rounded-lg">
+                <Users className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-muted-foreground">
+                  Aún no hay obras de artistas con plan Avanzado para mostrar en esta galería.
+                </p>
+              </div>
+            )}
           </div>
         </section>
         

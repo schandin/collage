@@ -28,6 +28,7 @@ export interface Artist {
   artworks: Artwork[];
   dataAiHint?: string;
   status?: 'active' | 'pending_approval' | 'blocked';
+  subscriptionPlanId?: string; // Added subscription plan ID
 }
 
 export interface SubscriptionPlan {
@@ -37,4 +38,3 @@ export interface SubscriptionPlan {
   photoLimit: number;
   features: string[];
 }
-
