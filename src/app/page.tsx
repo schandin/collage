@@ -1,70 +1,82 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import ArtworkFullscreenModal from '@/app/components/ArtworkFullscreenModal';
-// ArtistCard no se usará en la sección modificada, pero se mantiene por si se usa en otro lado.
-// import ArtistCard from '@/app/components/ArtistCard'; 
+import ArtistAutoCarouselCard from '@/app/components/ArtistAutoCarouselCard';
 import { Button } from '@/components/ui/button';
-// Input no se usará en la sección modificada.
-// import { Input } from '@/components/ui/input'; 
 import { getMockArtworks, getMockArtists } from '@/lib/mockData';
 import type { Artist as ArtistType, Artwork as ArtworkType } from '@/types';
-import { Search, ChevronRight, Palette, Users, Star } from 'lucide-react'; // Star para Galería Avanzada
-import Image from 'next/image';
+import { Palette, Users, Star, Zap, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Home() {
-  const [featuredArtists, setFeaturedArtists] = useState<ArtistType[]>([]);
-  const [allArtworks, setAllArtworks] = useState<ArtworkType[]>([]);
-  const [advancedArtworksForCarousel, setAdvancedArtworksForCarousel] = useState<ArtworkType[]>([]);
+interface ArtistWithArtworks {
+  artist: ArtistType;
+  artworks: ArtworkType[];
+}
 
+export default function Home() {
+  const [priorityArtistsData, setPriorityArtistsData] = useState<ArtistWithArtworks[]>([]);
+  const [advancedArtistsData, setAdvancedArtistsData] = useState<ArtistWithArtworks[]>([]);
+  
   const [selectedArtworkForModal, setSelectedArtworkForModal] = useState<ArtworkType | null>(null);
   const [selectedArtistForModal, setSelectedArtistForModal] = useState<ArtistType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const currentArtists = getMockArtists();
-    const currentArtworks = getMockArtworks();
-    
-    // For "Galerías Destacadas de Nuestros Artistas" section
-    setFeaturedArtists(currentArtists.filter(art => art.status === 'active').slice(0, 4));
-    setAllArtworks(currentArtworks);
+    const allArtists = getMockArtists();
+    const allArtworks = getMockArtworks();
 
-    // For "Galería Avanzada" (new carousel section)
-    const activeArtists = currentArtists.filter(a => a.status === 'active');
-    const advancedTierArtists = activeArtists.filter(a => a.subscriptionPlanId === 'plan2');
+    // Priority Artists (plan3) - up to 4
+    const priorityPlanId = 'plan3';
+    const activePriorityArtists = allArtists.filter(
+      artist => artist.status === 'active' && artist.subscriptionPlanId === priorityPlanId
+    ).slice(0, 4);
 
-    const carouselArtworks: ArtworkType[] = [];
-    advancedTierArtists.forEach(artist => {
-      const artistApprovedArtworks = currentArtworks.filter(
+    const prepPriorityData = activePriorityArtists.map(artist => {
+      const artworks = allArtworks.filter(
         art => art.artistId === artist.id && art.status === 'approved'
-      );
-      carouselArtworks.push(...artistApprovedArtworks);
+      ); // All approved artworks
+      return { artist, artworks };
     });
-    setAdvancedArtworksForCarousel(carouselArtworks);
+    setPriorityArtistsData(prepPriorityData);
+
+    // Advanced Artists (plan2) - up to 6
+    const advancedPlanId = 'plan2';
+    const activeAdvancedArtists = allArtists.filter(
+      artist => artist.status === 'active' && artist.subscriptionPlanId === advancedPlanId
+    ).slice(0, 6);
+    
+    const prepAdvancedData = activeAdvancedArtists.map(artist => {
+      const artworks = allArtworks.filter(
+        art => art.artistId === artist.id && art.status === 'approved'
+      ).slice(0, 5); // Max 5 artworks
+      return { artist, artworks };
+    });
+    setAdvancedArtistsData(prepAdvancedData);
 
   }, []);
 
-  const handleOpenModal = (artwork: ArtworkType) => {
+  const handleOpenModal = useCallback((artwork: ArtworkType) => {
     setSelectedArtworkForModal(artwork);
     const artist = getMockArtists().find(a => a.id === artwork.artistId);
     setSelectedArtistForModal(artist || null);
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     setSelectedArtworkForModal(null);
     setSelectedArtistForModal(null);
-  };
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow">
+        {/* Hero Section */}
         <section className="relative py-20 md:py-32 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
           <div className="container mx-auto px-4 text-center relative z-10">
             <h1 className="text-5xl md:text-7xl font-headline text-primary mb-6 leading-tight">
@@ -84,107 +96,67 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Priority Artists Carousel Section */}
         <section className="py-16 bg-card">
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-headline text-primary mb-12 text-center">
-              Galerías Destacadas de Nuestros Artistas
+            <h2 className="text-4xl font-headline text-primary mb-12 text-center flex items-center justify-center">
+              <ShieldCheck className="w-10 h-10 mr-3 text-purple-500" /> {/* Icon for Priority */}
+              Artistas Priority Destacados
             </h2>
-            <div className="space-y-12">
-              {featuredArtists.map((artist) => {
-                const artistArtworks = allArtworks.filter(
-                  (art) => art.artistId === artist.id && art.status === 'approved'
-                ).slice(0, 10);
-
-                if (artistArtworks.length === 0 && artist.status !== 'active') return null; 
-
-                return (
-                  <div key={artist.id}>
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-3">
-                      <h3 className="text-3xl font-headline text-primary">{artist.name}</h3>
-                      <Button variant="outline" asChild className="border-accent text-accent hover:bg-accent hover:text-accent-foreground self-start sm:self-center">
-                        <Link href={`/artistas/${artist.id}`}>
-                          Ver Perfil Completo <ChevronRight className="w-4 h-4 ml-1" />
-                        </Link>
-                      </Button>
-                    </div>
-                    {artistArtworks.length > 0 ? (
-                      <div className="flex overflow-x-auto space-x-4 pb-4 -mx-1 px-1 scrollbar-thin scrollbar-thumb-accent/70 scrollbar-track-accent/20 rounded-lg">
-                        {artistArtworks.map((artwork) => (
-                          <button
-                            key={artwork.id}
-                            onClick={() => handleOpenModal(artwork)}
-                            className="aspect-square relative block w-48 h-48 md:w-56 md:h-56 flex-shrink-0 overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 group"
-                            aria-label={`Ver obra ${artwork.title}`}
-                          >
-                            <Image
-                              src={artwork.imageUrl}
-                              alt={artwork.title}
-                              fill
-                              style={{ objectFit: "cover" }}
-                              className="transition-transform duration-500 ease-in-out group-hover:scale-110"
-                              data-ai-hint={artwork.dataAiHint || "artist artwork"}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
-                              <p className="text-white text-sm font-semibold truncate">{artwork.title}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-6 px-4 border-2 border-dashed border-muted-foreground/30 rounded-lg">
-                          <Palette className="w-10 h-10 text-muted-foreground/50 mx-auto mb-2" />
-                          <p className="text-muted-foreground text-sm">Este artista aún no tiene obras públicas para mostrar aquí.</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Nueva sección "Galería Avanzada" con carrusel de obras */}
-        <section className="py-16 bg-background">
-          <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-headline text-primary text-center mb-10 flex items-center justify-center">
-              <Star className="w-10 h-10 mr-3 text-accent" />
-              Galería Avanzada
-            </h2>
-            {advancedArtworksForCarousel.length > 0 ? (
-              <div className="flex overflow-x-auto space-x-4 pb-4 -mx-1 px-1 scrollbar-thin scrollbar-thumb-accent/70 scrollbar-track-accent/20 rounded-lg">
-                {advancedArtworksForCarousel.map((artwork) => (
-                  <button
-                    key={artwork.id}
-                    onClick={() => handleOpenModal(artwork)}
-                    className="aspect-square relative block w-64 h-64 md:w-72 md:h-72 flex-shrink-0 overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 group"
-                    aria-label={`Ver obra ${artwork.title}`}
-                  >
-                    <Image
-                      src={artwork.imageUrl}
-                      alt={artwork.title}
-                      fill
-                      style={{ objectFit: "cover" }}
-                      className="transition-transform duration-500 ease-in-out group-hover:scale-110"
-                      data-ai-hint={artwork.dataAiHint || "advanced artwork"}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
-                      <p className="text-white text-sm font-semibold truncate">{artwork.title}</p>
-                      <p className="text-white text-xs truncate">Por {artwork.artistName}</p>
-                    </div>
-                  </button>
+            {priorityArtistsData.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {priorityArtistsData.map(({ artist, artworks }) => (
+                  <ArtistAutoCarouselCard
+                    key={artist.id}
+                    artist={artist}
+                    artworks={artworks}
+                    onArtworkClick={handleOpenModal}
+                    priority={true}
+                  />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-10 px-4 border-2 border-dashed border-muted-foreground/30 rounded-lg">
+              <div className="text-center py-10 px-4 border-2 border-dashed border-muted-foreground/30 rounded-lg bg-background">
                 <Users className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
                 <p className="text-muted-foreground">
-                  Aún no hay obras de artistas con plan Avanzado para mostrar en esta galería.
+                  Aún no hay artistas Priority para mostrar. ¡Vuelve pronto!
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Advanced Artists Carousel Section */}
+        <section className="py-16 bg-background">
+          <div className="container mx-auto px-4">
+            <h2 className="text-4xl font-headline text-primary text-center mb-12 flex items-center justify-center">
+              <Star className="w-10 h-10 mr-3 text-yellow-500" /> {/* Icon for Advanced */}
+              Galería de Artistas Avanzados
+            </h2>
+            {advancedArtistsData.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"> {/* Up to 6, so 3 per row on medium+ */}
+                {advancedArtistsData.map(({ artist, artworks }) => (
+                  <ArtistAutoCarouselCard
+                    key={artist.id}
+                    artist={artist}
+                    artworks={artworks}
+                    onArtworkClick={handleOpenModal}
+                    priority={false}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 px-4 border-2 border-dashed border-muted-foreground/30 rounded-lg bg-card">
+                <Palette className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+                <p className="text-muted-foreground">
+                  Aún no hay artistas con plan Avanzado para mostrar aquí.
                 </p>
               </div>
             )}
           </div>
         </section>
         
+        {/* Call to Action Section */}
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl font-headline mb-6">¿Eres Artista de Collage?</h2>
@@ -207,3 +179,4 @@ export default function Home() {
     </div>
   );
 }
+
