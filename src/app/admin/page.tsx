@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck } from 'lucide-react';
+import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, BadgeDollarSign, Star } from 'lucide-react';
 import { 
   getMockArtists,
   getMockArtworks,
   updateAndSaveArtists,
-  updateAndSaveArtworks
+  updateAndSaveArtworks,
+  mockSubscriptionPlans // Importar los planes de suscripción
 } from '@/lib/mockData';
 import type { Artist, Artwork } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -42,6 +43,10 @@ export default function AdminDashboardPage() {
     }
   }, [router]);
 
+  const refreshArtistsUI = () => {
+    setArtistsForUI(getMockArtists().map(a => ({...a})));
+  }
+
   const refreshArtworksUI = () => {
     const currentArtworksFromGlobal = getMockArtworks().map(art => ({...art}));
     setPendingArtworksForUI(currentArtworksFromGlobal.filter(art => art.status === 'pending'));
@@ -53,7 +58,7 @@ export default function AdminDashboardPage() {
       a.id === artistId ? { ...a, status: 'active' } : a
     );
     updateAndSaveArtists(updatedGlobalArtists);
-    setArtistsForUI(updatedGlobalArtists.map(a => ({...a}))); 
+    refreshArtistsUI();
 
     const approvedArtistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
     toast({ title: "Artista Aprobado", description: `El artista ${approvedArtistName} ahora está activo.` });
@@ -65,7 +70,7 @@ export default function AdminDashboardPage() {
       a.id === artistId ? { ...a, status: 'blocked' } : a
     );
     updateAndSaveArtists(updatedGlobalArtists);
-    setArtistsForUI(updatedGlobalArtists.map(a => ({...a}))); 
+    refreshArtistsUI();
 
     const blockedArtistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
     toast({ title: "Artista Bloqueado", description: `El artista ${blockedArtistName} ha sido bloqueado.`, variant: "destructive" });
@@ -103,6 +108,32 @@ export default function AdminDashboardPage() {
     );
   }
 
+  const getPlanBadge = (planId?: string) => {
+    const plan = mockSubscriptionPlans.find(p => p.id === planId);
+    if (!plan) return <Badge variant="outline" className="text-xs">Sin plan</Badge>;
+
+    let icon = <BadgeDollarSign className="w-3 h-3 mr-1" />;
+    let className = "bg-gray-200 text-gray-800 hover:bg-gray-300";
+
+    if (plan.name.toLowerCase() === 'avanzado') {
+      icon = <Star className="w-3 h-3 mr-1 text-yellow-500" />;
+      className = "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-400";
+    } else if (plan.name.toLowerCase() === 'priority') {
+      icon = <ShieldCheck className="w-3 h-3 mr-1 text-purple-500" />;
+      className = "bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-400";
+    } else if (plan.name.toLowerCase() === 'básico') {
+       icon = <Users className="w-3 h-3 mr-1 text-blue-500" />;
+       className = "bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-400";
+    }
+    
+    return (
+      <Badge variant="outline" className={`text-xs ${className}`}>
+        {icon}
+        {plan.name}
+      </Badge>
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -132,9 +163,10 @@ export default function AdminDashboardPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Nombre</TableHead>
+                      <TableHead className="w-[250px]">Nombre</TableHead>
                       <TableHead>País</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Plan</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
@@ -142,12 +174,27 @@ export default function AdminDashboardPage() {
                   <TableBody>
                     {artistsForUI.map((artist) => (
                       <TableRow key={artist.id}>
-                        <TableCell className="font-medium">{artist.name}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-3">
+                            <Image
+                              src={artist.profileImageUrl || 'https://placehold.co/40x40.png'}
+                              alt={artist.name}
+                              width={32}
+                              height={32}
+                              className="rounded-full object-cover aspect-square"
+                              data-ai-hint="artist avatar"
+                            />
+                            <span className="truncate" title={artist.name}>{artist.name}</span>
+                          </div>
+                        </TableCell>
                         <TableCell>{artist.country}</TableCell>
-                        <TableCell>{artist.email}</TableCell>
+                        <TableCell className="truncate" title={artist.email}>{artist.email}</TableCell>
+                        <TableCell>
+                          {getPlanBadge(artist.subscriptionPlanId)}
+                        </TableCell>
                         <TableCell>
                           <Badge variant={artist.status === 'active' ? 'default' : artist.status === 'pending_approval' ? 'secondary' : 'destructive'}
-                           className={artist.status === 'active' ? 'bg-green-500 text-white' : artist.status === 'pending_approval' ? 'bg-yellow-500 text-black' : ''}
+                           className={artist.status === 'active' ? 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200' : artist.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800 border-yellow-400 hover:bg-yellow-200' : 'bg-red-100 text-red-800 border-red-400 hover:bg-red-200'}
                           >
                             {artist.status === 'active' ? 'Activo' : artist.status === 'pending_approval' ? 'Pendiente' : 'Bloqueado'}
                           </Badge>
