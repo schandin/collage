@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn, UserCircle, Eye, EyeOff, UserPlus } from 'lucide-react';
-import { getMockArtists } from '@/lib/mockData'; // Import getMockArtists
+import { getMockArtists } from '@/lib/mockData'; 
 
 export default function ArtistLoginPage() {
   const router = useRouter();
@@ -41,7 +41,17 @@ export default function ArtistLoginPage() {
         });
         return;
       }
-      if (foundArtist.status === 'pending_approval' && !foundArtist.id.startsWith('newArtist-')) {
+      if (foundArtist.status === 'profile_incomplete') {
+         toast({
+           title: "Perfil Incompleto",
+           description: "Por favor, completa tu perfil para continuar. Redirigiendo...",
+         });
+         localStorage.setItem('isArtistAuthenticated', 'true');
+         localStorage.setItem('currentArtistId', foundArtist.id); 
+         router.push('/panel-artista');
+         return;
+      }
+      if (foundArtist.status === 'pending_approval') {
          setError('Tu cuenta está pendiente de aprobación por un administrador.');
          toast({
            title: "Cuenta Pendiente",
@@ -50,7 +60,6 @@ export default function ArtistLoginPage() {
          });
          return;
       }
-
 
       toast({
         title: "Inicio de sesión exitoso",
@@ -147,4 +156,3 @@ export default function ArtistLoginPage() {
     </div>
   );
 }
-

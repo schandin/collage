@@ -18,7 +18,7 @@ export interface Artist {
   country: string;
   profileImageUrl: string;
   email: string;
-  password?: string; // Added password field
+  password?: string; 
   socialMedia?: {
     instagram?: string;
     facebook?: string;
@@ -27,8 +27,8 @@ export interface Artist {
   bio?: string;
   artworks: Artwork[];
   dataAiHint?: string;
-  status?: 'active' | 'pending_approval' | 'blocked';
-  subscriptionPlanId?: string; // Added subscription plan ID
+  status?: 'active' | 'pending_approval' | 'blocked' | 'profile_incomplete'; // Added 'profile_incomplete'
+  subscriptionPlanId?: string; 
 }
 
 export interface SubscriptionPlan {

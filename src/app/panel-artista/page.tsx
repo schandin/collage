@@ -28,6 +28,7 @@ export default function PanelArtistaPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
+  const [initialArtistStatus, setInitialArtistStatus] = useState<Artist['status'] | null>(null);
   
   const [artistArtworks, setArtistArtworks] = useState<Artwork[]>([]);
   
@@ -55,7 +56,7 @@ export default function PanelArtistaPage() {
     dataAiHint: '', 
     instagram: '',
     facebook: '',
-    subscriptionPlanId: '', // Added to store the plan ID
+    subscriptionPlanId: '', 
   });
   
   const [profileSelectedFile, setProfileSelectedFile] = useState<File | null>(null);
@@ -92,12 +93,13 @@ export default function PanelArtistaPage() {
 
     const existingArtist = currentGlobalArtists.find(a => a.id === artistIdFromStorage);
     if (existingArtist) {
+      setInitialArtistStatus(existingArtist.status || null);
       setProfileForm({
-        name: existingArtist.name,
-        country: existingArtist.country,
+        name: existingArtist.name || '',
+        country: existingArtist.country || '',
         bio: existingArtist.bio || '',
-        email: existingArtist.email,
-        profileImageUrl: existingArtist.profileImageUrl, 
+        email: existingArtist.email, // Email should already be set from pre-registration
+        profileImageUrl: existingArtist.profileImageUrl || '', 
         dataAiHint: existingArtist.dataAiHint || '',
         instagram: existingArtist.socialMedia?.instagram || '',
         facebook: existingArtist.socialMedia?.facebook || '',
@@ -107,20 +109,25 @@ export default function PanelArtistaPage() {
           setProfileImagePreviewUrl(existingArtist.profileImageUrl);
       }
       setArtistArtworks(currentGlobalArtworks.filter(art => art.artistId === artistIdFromStorage));
-    } else if (artistIdFromStorage.startsWith('newArtist-')) {
-      const pendingPlanId = localStorage.getItem('pendingSubscriptionPlanId') || '';
-      setProfileForm({ 
-        name: '', 
-        country: '', 
-        bio: '', 
-        email: '', 
-        profileImageUrl: '', 
-        dataAiHint: '', 
-        instagram: '', 
-        facebook: '',
-        subscriptionPlanId: pendingPlanId, // Initialize with pending plan
+
+      if (existingArtist.status === 'profile_incomplete') {
+        toast({
+          title: "Completa tu Perfil",
+          description: "Por favor, rellena todos los detalles de tu perfil para activarlo.",
+        });
+      }
+
+    } else {
+      // This case should ideally not happen if redirection from payment page is correct
+      // and artist ID is always valid.
+       toast({
+        title: "Error de Perfil",
+        description: "No se pudo cargar tu perfil. Intenta iniciar sesión de nuevo.",
+        variant: "destructive"
       });
-      setArtistArtworks([]);
+      localStorage.removeItem('isArtistAuthenticated');
+      localStorage.removeItem('currentArtistId');
+      router.push('/artistas/login');
     }
     
     setIsLoading(false);
@@ -303,7 +310,14 @@ export default function PanelArtistaPage() {
       toast({ title: "Email Inválido", description: "Por favor, introduce un email válido para tu perfil.", variant: "destructive" });
       return;
     }
-
+    if (!profileForm.name.trim()) {
+      toast({ title: "Nombre Requerido", description: "Por favor, introduce tu nombre de artista.", variant: "destructive" });
+      return;
+    }
+    if (!profileForm.country.trim()) {
+      toast({ title: "País Requerido", description: "Por favor, introduce tu país.", variant: "destructive" });
+      return;
+    }
 
     let finalProfileImageUrl = profileForm.profileImageUrl;
     const currentGlobalArtists = getMockArtists();
@@ -315,62 +329,60 @@ export default function PanelArtistaPage() {
       finalProfileImageUrl = profileImagePreviewUrl || 'https://placehold.co/300x300.png';
     }
 
-
-    let artistExists = false;
     const updatedGlobalArtistsList = currentGlobalArtists.map(a => {
       if (a.id === currentArtistId) {
-        artistExists = true;
         return {
           ...a,
           name: profileForm.name,
           country: profileForm.country,
           bio: profileForm.bio,
-          email: profileForm.email,
-          password: a.password || (currentArtistId.startsWith('newArtist-') ? "password123" : undefined),
+          email: profileForm.email, // Email might be updated here too
           profileImageUrl: finalProfileImageUrl,
           dataAiHint: profileForm.dataAiHint,
           socialMedia: {
             instagram: profileForm.instagram,
             facebook: profileForm.facebook,
           },
-          status: a.status || 'pending_approval', 
-          subscriptionPlanId: profileForm.subscriptionPlanId || a.subscriptionPlanId, // Use form plan or existing
+          // If status was 'profile_incomplete', change to 'pending_approval'. Otherwise, keep current status.
+          status: a.status === 'profile_incomplete' ? 'pending_approval' : a.status, 
+          subscriptionPlanId: profileForm.subscriptionPlanId || a.subscriptionPlanId,
         };
       }
       return a;
     });
 
-    if (!artistExists && currentArtistId.startsWith('newArtist-')) { 
-      const pendingPlanId = localStorage.getItem('pendingSubscriptionPlanId');
-      const newArtist: Artist = {
-        id: currentArtistId,
-        name: profileForm.name,
-        country: profileForm.country,
-        profileImageUrl: finalProfileImageUrl,
-        dataAiHint: profileForm.dataAiHint,
-        email: profileForm.email, 
-        password: "password123", 
-        bio: profileForm.bio,
-        artworks: [], 
-        socialMedia: {
-          instagram: profileForm.instagram,
-          facebook: profileForm.facebook,
-        },
-        status: 'pending_approval', 
-        subscriptionPlanId: pendingPlanId || undefined, // Assign plan from localStorage
-      };
-      updatedGlobalArtistsList.push(newArtist);
-      if (pendingPlanId) {
-        localStorage.removeItem('pendingSubscriptionPlanId'); // Clean up
-      }
-    }
     updateAndSaveArtists(updatedGlobalArtistsList);
-    toast({ title: "Perfil guardado", description: "Tu información ha sido actualizada. Si eres un nuevo artista o cambiaste tu foto/email, tu perfil pasará a revisión y podrás iniciar sesión con este email y la contraseña 'password123'." });
+    
+    const newStatus = initialArtistStatus === 'profile_incomplete' ? 'pending_approval' : initialArtistStatus;
+    setInitialArtistStatus(newStatus); // Update initial status for subsequent saves
+
+    toast({ title: "Perfil guardado", description: "Tu información ha sido actualizada. Si completaste tu perfil por primera vez, pasará a revisión." });
   };
 
   const handleArtworkSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!currentArtistId || isImageProcessing) return;
+
+    const currentGlobalArtists = getMockArtists();
+    const artistProfile = currentGlobalArtists.find(a => a.id === currentArtistId);
+
+    if (artistProfile?.status === 'profile_incomplete') {
+        toast({ 
+          title: "Completa tu perfil primero", 
+          description: "Para subir obras, primero debes completar y guardar tu perfil de artista en la pestaña 'Mi Perfil'.", 
+          variant: "destructive"
+        });
+        return;
+    }
+     if (!artistProfile || !artistProfile.email) { 
+        toast({ 
+          title: "Error de Perfil", 
+          description: "No se pudo encontrar tu perfil de artista o falta un email. Ve a 'Mi Perfil' y guarda tus datos.", 
+          variant: "destructive"
+        });
+        return;
+    }
+
 
     if (!artworkForm.title.trim()) {
       toast({ title: "Título requerido", description: "Por favor, asigna un título a tu obra.", variant: "destructive" });
@@ -383,17 +395,6 @@ export default function PanelArtistaPage() {
       return;
     }
     
-    const currentGlobalArtists = getMockArtists();
-    const artistProfile = currentGlobalArtists.find(a => a.id === currentArtistId);
-    if (!artistProfile || !artistProfile.email) { 
-        toast({ 
-          title: "Guarda tu perfil primero", 
-          description: "Para subir obras, tu perfil de artista (incluyendo un email válido) debe estar guardado. Ve a la pestaña 'Mi Perfil' y guarda tus datos.", 
-          variant: "destructive"
-        });
-        return;
-    }
-
     let currentGlobalArtworks = getMockArtworks();
     let updatedGlobalArtworksList;
     if (editingArtwork) { 
@@ -468,14 +469,13 @@ export default function PanelArtistaPage() {
           <Button variant="outline" onClick={() => { 
             localStorage.removeItem('isArtistAuthenticated'); 
             localStorage.removeItem('currentArtistId');
-            localStorage.removeItem('pendingSubscriptionPlanId'); // Clean up plan ID on logout
             router.push('/');
           }}>
             Cerrar Sesión
           </Button>
         </div>
 
-        <Tabs defaultValue="mis-obras" className="w-full">
+        <Tabs defaultValue={initialArtistStatus === 'profile_incomplete' ? "mi-perfil" : "mis-obras"} className="w-full">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-2 mb-6">
             <TabsTrigger value="mis-obras" className="py-3"><Scissors className="w-5 h-5 mr-2" />Mis Obras</TabsTrigger>
             <TabsTrigger value="subir-obra" className="py-3"><UploadCloud className="w-5 h-5 mr-2" />Subir/Editar Obra</TabsTrigger>
@@ -489,7 +489,9 @@ export default function PanelArtistaPage() {
                 <CardDescription>Visualiza, edita o elimina las obras de tu galería.</CardDescription>
               </CardHeader>
               <CardContent>
-                {artistArtworks.length > 0 ? (
+                {initialArtistStatus === 'profile_incomplete' ? (
+                    <p className="text-muted-foreground text-center py-8">Debes completar tu perfil en la pestaña 'Mi Perfil' antes de poder gestionar obras.</p>
+                ) : artistArtworks.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {artistArtworks.map((artwork) => (
                       <Card key={artwork.id} className="overflow-hidden group">
@@ -519,7 +521,18 @@ export default function PanelArtistaPage() {
                 )}
               </CardContent>
                <CardFooter>
-                <Button onClick={() => { resetArtworkForm(); document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"]')?.click();}} className="ml-auto bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button 
+                  onClick={() => { 
+                    if (initialArtistStatus === 'profile_incomplete') {
+                        toast({ title: "Perfil Incompleto", description: "Completa y guarda tu perfil primero.", variant: "default"});
+                        document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="mi-perfil"]')?.click();
+                        return;
+                    }
+                    resetArtworkForm(); 
+                    document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"]')?.click();
+                  }} 
+                  className="ml-auto bg-accent text-accent-foreground hover:bg-accent/90"
+                >
                   <UploadCloud className="w-4 h-4 mr-2" /> Subir Nueva Obra
                 </Button>
               </CardFooter>
@@ -532,97 +545,104 @@ export default function PanelArtistaPage() {
                 <CardHeader>
                   <CardTitle>{editingArtwork ? "Editar Obra" : "Subir Nueva Obra"}</CardTitle>
                   <CardDescription>
-                    {editingArtwork ? `Modifica los detalles de "${editingArtwork.title}".` : "Añade una nueva pieza a tu colección para que el mundo la vea."}
+                    {initialArtistStatus === 'profile_incomplete' ? "Completa tu perfil en la pestaña 'Mi Perfil' antes de subir obras." 
+                    : editingArtwork ? `Modifica los detalles de "${editingArtwork.title}".` : "Añade una nueva pieza a tu colección para que el mundo la vea."}
                     {editingArtwork && selectedFile && <span className="block text-xs text-blue-600 mt-1">Has seleccionado una nueva imagen. Si la guardas, la obra podría requerir nueva aprobación.</span>}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div>
-                    <Label htmlFor="artwork-file-upload" className="text-base mb-2 block">Imagen de la Obra</Label>
-                    <div 
-                      className="mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md hover:border-primary transition-colors"
-                      onDragOver={handleDragOver}
-                      onDrop={handleDrop}
-                    >
-                      <div className="space-y-1 text-center">
-                        {!currentImageToPreview && !isImageProcessing && <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />}
-                        {isImageProcessing && <Loader2 className="mx-auto h-12 w-12 text-muted-foreground animate-spin" />}
-                        <div className="flex text-sm text-muted-foreground justify-center">
-                          <Label htmlFor="artwork-file-input" className={`relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary ${isImageProcessing ? 'pointer-events-none opacity-50' : ''}`}>
-                            <span>{currentImageToPreview ? 'Cambiar imagen' : (isImageProcessing ? 'Procesando...' : 'Sube un archivo')}</span>
-                            <input id="artwork-file-input" name="artwork-file-input" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} disabled={isImageProcessing} />
-                          </Label>
-                          {!currentImageToPreview && !isImageProcessing && <p className="pl-1">o arrastra y suelta</p>}
-                        </div>
-                        {!currentImageToPreview && !isImageProcessing && <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WEBP</p>}
-                         {fileName && !currentImageToPreview && !isImageProcessing && <p className="text-sm text-foreground pt-2">Archivo: {fileName}</p>}
-                      </div>
-                    </div>
-
-                    {currentImageToPreview && (
-                      <div className="mt-4 relative w-48 h-48 border rounded-md overflow-hidden mx-auto group">
-                        <Image
-                          src={currentImageToPreview}
-                          alt="Previsualización de la obra"
-                          fill
-                          style={{ objectFit: "cover" }}
-                          className="rounded"
-                          data-ai-hint={artworkForm.dataAiHint || "artwork preview"}
-                        />
-                        <Button 
-                            type="button" 
-                            variant="destructive" 
-                            size="icon" 
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
-                            onClick={handleRemoveImage}
-                            aria-label="Eliminar imagen"
-                            disabled={isImageProcessing}
+                  {initialArtistStatus !== 'profile_incomplete' && (
+                    <>
+                    <div>
+                        <Label htmlFor="artwork-file-upload" className="text-base mb-2 block">Imagen de la Obra</Label>
+                        <div 
+                        className="mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md hover:border-primary transition-colors"
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
                         >
-                            <X className="h-4 w-4" />
-                        </Button>
-                         {fileName && <p className="text-xs text-center text-muted-foreground pt-1 truncate w-full px-1" title={fileName}>{fileName}</p>}
-                      </div>
-                    )}
-                  </div>
+                        <div className="space-y-1 text-center">
+                            {!currentImageToPreview && !isImageProcessing && <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />}
+                            {isImageProcessing && <Loader2 className="mx-auto h-12 w-12 text-muted-foreground animate-spin" />}
+                            <div className="flex text-sm text-muted-foreground justify-center">
+                            <Label htmlFor="artwork-file-input" className={`relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary ${isImageProcessing ? 'pointer-events-none opacity-50' : ''}`}>
+                                <span>{currentImageToPreview ? 'Cambiar imagen' : (isImageProcessing ? 'Procesando...' : 'Sube un archivo')}</span>
+                                <input id="artwork-file-input" name="artwork-file-input" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} disabled={isImageProcessing} />
+                            </Label>
+                            {!currentImageToPreview && !isImageProcessing && <p className="pl-1">o arrastra y suelta</p>}
+                            </div>
+                            {!currentImageToPreview && !isImageProcessing && <p className="text-xs text-muted-foreground">PNG, JPG, GIF, WEBP</p>}
+                            {fileName && !currentImageToPreview && !isImageProcessing && <p className="text-sm text-foreground pt-2">Archivo: {fileName}</p>}
+                        </div>
+                        </div>
 
-                  <div>
-                    <Label htmlFor="artwork-title" className="text-base">Título</Label>
-                    <Input id="artwork-title" placeholder="Ej: Paisaje Onírico" value={artworkForm.title} onChange={handleArtworkFormChange} className="mt-1 text-base" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="artwork-description" className="text-base">Descripción</Label>
-                    <Textarea id="artwork-description" placeholder="Describe tu obra, técnicas, inspiración..." value={artworkForm.description} onChange={handleArtworkFormChange} className="mt-1 text-base" rows={4}/>
-                  </div>
-                  <div>
-                    <Label htmlFor="artwork-price" className="text-base">Precio (USD)</Label>
-                    <div className="relative mt-1">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <Input id="artwork-price" type="number" placeholder="Ej: 150" value={artworkForm.price} onChange={handleArtworkFormChange} className="pl-10 text-base" />
+                        {currentImageToPreview && (
+                        <div className="mt-4 relative w-48 h-48 border rounded-md overflow-hidden mx-auto group">
+                            <Image
+                            src={currentImageToPreview}
+                            alt="Previsualización de la obra"
+                            fill
+                            style={{ objectFit: "cover" }}
+                            className="rounded"
+                            data-ai-hint={artworkForm.dataAiHint || "artwork preview"}
+                            />
+                            <Button 
+                                type="button" 
+                                variant="destructive" 
+                                size="icon" 
+                                className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7"
+                                onClick={handleRemoveImage}
+                                aria-label="Eliminar imagen"
+                                disabled={isImageProcessing}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                            {fileName && <p className="text-xs text-center text-muted-foreground pt-1 truncate w-full px-1" title={fileName}>{fileName}</p>}
+                        </div>
+                        )}
                     </div>
-                  </div>
-                   <div>
-                    <Label htmlFor="artwork-dataAiHint" className="text-base">Palabras clave para IA (ej: abstract nature)</Label>
-                    <Input id="artwork-dataAiHint" placeholder="Dos palabras max." value={artworkForm.dataAiHint} onChange={handleArtworkFormChange} className="mt-1 text-base" />
-                  </div>
+
+                    <div>
+                        <Label htmlFor="artwork-title" className="text-base">Título</Label>
+                        <Input id="artwork-title" placeholder="Ej: Paisaje Onírico" value={artworkForm.title} onChange={handleArtworkFormChange} className="mt-1 text-base" required />
+                    </div>
+                    <div>
+                        <Label htmlFor="artwork-description" className="text-base">Descripción</Label>
+                        <Textarea id="artwork-description" placeholder="Describe tu obra, técnicas, inspiración..." value={artworkForm.description} onChange={handleArtworkFormChange} className="mt-1 text-base" rows={4}/>
+                    </div>
+                    <div>
+                        <Label htmlFor="artwork-price" className="text-base">Precio (USD)</Label>
+                        <div className="relative mt-1">
+                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input id="artwork-price" type="number" placeholder="Ej: 150" value={artworkForm.price} onChange={handleArtworkFormChange} className="pl-10 text-base" />
+                        </div>
+                    </div>
+                    <div>
+                        <Label htmlFor="artwork-dataAiHint" className="text-base">Palabras clave para IA (ej: abstract nature)</Label>
+                        <Input id="artwork-dataAiHint" placeholder="Dos palabras max." value={artworkForm.dataAiHint} onChange={handleArtworkFormChange} className="mt-1 text-base" />
+                    </div>
+                    </>
+                  )}
                 </CardContent>
                 <CardFooter className="justify-end space-x-2">
-                  {editingArtwork && (
+                   {initialArtistStatus !== 'profile_incomplete' && editingArtwork && (
                     <Button variant="outline" type="button" onClick={resetArtworkForm} disabled={isImageProcessing}>
                       Cancelar Edición
                     </Button>
                   )}
-                  <Button 
-                    type="submit" 
-                    className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    disabled={isImageProcessing || (!artworkForm.imageUrl && !editingArtwork && !selectedFile)} 
-                  >
-                    {isImageProcessing ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    {editingArtwork ? "Guardar Cambios" : "Subir Obra"}
-                  </Button>
+                  {initialArtistStatus !== 'profile_incomplete' && (
+                    <Button 
+                        type="submit" 
+                        className="bg-accent text-accent-foreground hover:bg-accent/90"
+                        disabled={isImageProcessing || (!artworkForm.imageUrl && !editingArtwork && !selectedFile)} 
+                    >
+                        {isImageProcessing ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                        )}
+                        {editingArtwork ? "Guardar Cambios" : "Subir Obra"}
+                    </Button>
+                  )}
                 </CardFooter>
               </form>
             </Card>
@@ -633,7 +653,11 @@ export default function PanelArtistaPage() {
               <form onSubmit={handleProfileSubmit}>
                 <CardHeader>
                   <CardTitle>Actualiza tu Perfil</CardTitle>
-                  <CardDescription>Mantén tu información de contacto y personal al día. Si es tu primer ingreso, completa todos los campos.</CardDescription>
+                  <CardDescription>
+                    {initialArtistStatus === 'profile_incomplete' 
+                      ? "¡Bienvenido! Completa tu perfil para empezar a mostrar tu arte." 
+                      : "Mantén tu información de contacto y personal al día."}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
@@ -727,5 +751,3 @@ export default function PanelArtistaPage() {
     </div>
   );
 }
-
-    
