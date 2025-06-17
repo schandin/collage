@@ -15,8 +15,8 @@ import { UploadCloud, Edit3, UserCircle, Scissors, DollarSign, Trash2, Eye, Save
 import Image from 'next/image';
 import type { Artwork, Artist } from '@/types';
 import { 
-  mockArtworks as globalMockArtworks, 
-  mockArtists as globalMockArtists,
+  getMockArtworks, 
+  getMockArtists,
   updateAndSaveArtists,
   updateAndSaveArtworks
 } from '@/lib/mockData';
@@ -29,7 +29,6 @@ export default function PanelArtistaPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentArtistId, setCurrentArtistId] = useState<string | null>(null);
   
-  // Local state for artworks displayed for the current artist
   const [artistArtworks, setArtistArtworks] = useState<Artwork[]>([]);
   
   const [editingArtwork, setEditingArtwork] = useState<Artwork | null>(null);
@@ -87,8 +86,10 @@ export default function PanelArtistaPage() {
     }
     setCurrentArtistId(artistIdFromStorage);
     
-    // Load from the global, localStorage-backed mockArtists
-    const existingArtist = globalMockArtists.find(a => a.id === artistIdFromStorage);
+    const currentGlobalArtists = getMockArtists();
+    const currentGlobalArtworks = getMockArtworks();
+
+    const existingArtist = currentGlobalArtists.find(a => a.id === artistIdFromStorage);
     if (existingArtist) {
       setProfileForm({
         name: existingArtist.name,
@@ -103,10 +104,8 @@ export default function PanelArtistaPage() {
       if (existingArtist.profileImageUrl) { 
           setProfileImagePreviewUrl(existingArtist.profileImageUrl);
       }
-      // Load from the global, localStorage-backed mockArtworks for this artist
-      setArtistArtworks(globalMockArtworks.filter(art => art.artistId === artistIdFromStorage));
+      setArtistArtworks(currentGlobalArtworks.filter(art => art.artistId === artistIdFromStorage));
     } else if (artistIdFromStorage.startsWith('newArtist-')) {
-      // New artist, potentially no profile saved yet. Initialize form with empty/default values.
       setProfileForm({ name: '', country: '', bio: '', email: '', profileImageUrl: '', dataAiHint: '', instagram: '', facebook: '' });
       setArtistArtworks([]);
     }
@@ -132,10 +131,9 @@ export default function PanelArtistaPage() {
       price: artwork.price?.toString() || '',
       dataAiHint: artwork.dataAiHint || '',
     });
-    // Reset file-specific states when starting an edit
     setSelectedFile(null); 
-    setImagePreviewUrl(artwork.imageUrl); // Show current image
-    setFileName(null); // No new file selected yet
+    setImagePreviewUrl(artwork.imageUrl); 
+    setFileName(null); 
     setIsImageProcessing(false);
     const tabTrigger = document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"]');
     tabTrigger?.click();
@@ -143,10 +141,10 @@ export default function PanelArtistaPage() {
 
   const handleDeleteArtwork = (artworkId: string) => {
     if (confirm("¿Estás seguro de que quieres eliminar esta obra?")) {
-      const updatedGlobalArtworks = globalMockArtworks.filter(art => art.id !== artworkId);
+      const currentGlobalArtworks = getMockArtworks();
+      const updatedGlobalArtworks = currentGlobalArtworks.filter(art => art.id !== artworkId);
       updateAndSaveArtworks(updatedGlobalArtworks);
       
-      // Update local state for UI
       setArtistArtworks(current => current.filter(art => art.id !== artworkId));
       toast({ title: "Obra eliminada" });
     }
@@ -176,7 +174,7 @@ export default function PanelArtistaPage() {
         toast({ title: "Error al leer archivo", description: "No se pudo procesar la imagen.", variant: "destructive" });
         setIsImageProcessing(false);
         setSelectedFile(null);
-        setImagePreviewUrl(editingArtwork ? editingArtwork.imageUrl : null); // Revert to original if error
+        setImagePreviewUrl(editingArtwork ? editingArtwork.imageUrl : null); 
         setFileName(null);
         setArtworkForm(prev => ({...prev, imageUrl: editingArtwork ? editingArtwork.imageUrl : ''}));
       };
@@ -217,11 +215,9 @@ export default function PanelArtistaPage() {
     setFileName(null);
     setIsImageProcessing(false); 
     if (editingArtwork) {
-      // If editing, revert preview and form URL to the original artwork's image
       setImagePreviewUrl(editingArtwork.imageUrl);
       setArtworkForm(prev => ({...prev, imageUrl: editingArtwork.imageUrl}));
     } else {
-      // If new artwork, clear preview and form URL
       setImagePreviewUrl(null);
       setArtworkForm(prev => ({...prev, imageUrl: ''}));
     }
@@ -243,7 +239,7 @@ export default function PanelArtistaPage() {
         toast({ title: "Error al leer archivo de perfil", description: "No se pudo procesar la imagen de perfil.", variant: "destructive" });
         setIsProfileImageProcessing(false);
         setProfileSelectedFile(null);
-        setProfileImagePreviewUrl(profileForm.profileImageUrl || null); // Revert to original if error
+        setProfileImagePreviewUrl(profileForm.profileImageUrl || null); 
         setProfileFileName(null);
       };
       reader.readAsDataURL(file);
@@ -283,8 +279,6 @@ export default function PanelArtistaPage() {
     setProfileImagePreviewUrl(null); 
     setProfileFileName(null);
     setIsProfileImageProcessing(false);
-    // When removing, we should clear the profileImageUrl in the form,
-    // placeholder logic will apply on submit if it remains empty.
     setProfileForm(prev => ({ ...prev, profileImageUrl: '' })); 
   };
 
@@ -294,21 +288,18 @@ export default function PanelArtistaPage() {
     if (!currentArtistId || isProfileImageProcessing) return;
 
     let finalProfileImageUrl = profileForm.profileImageUrl;
-    const existingArtistForCheck = globalMockArtists.find(a => a.id === currentArtistId);
+    const currentGlobalArtists = getMockArtists();
+    const existingArtistForCheck = currentGlobalArtists.find(a => a.id === currentArtistId);
 
     if (!finalProfileImageUrl && !(existingArtistForCheck && existingArtistForCheck.profileImageUrl) && !profileSelectedFile) {
-      // Only set placeholder if no new file is selected AND no previous image exists AND form field is empty
       finalProfileImageUrl = 'https://placehold.co/300x300.png'; 
     } else if (!finalProfileImageUrl && profileSelectedFile) {
-      // This case should be covered by processProfileFile setting profileForm.profileImageUrl
-      // but as a fallback, if profileImageUrl is somehow empty despite a file being selected,
-      // it implies an error or an intermediate state. We should probably rely on profileImagePreviewUrl if available.
       finalProfileImageUrl = profileImagePreviewUrl || 'https://placehold.co/300x300.png';
     }
 
 
     let artistExists = false;
-    const updatedGlobalArtistsList = globalMockArtists.map(a => {
+    const updatedGlobalArtistsList = currentGlobalArtists.map(a => {
       if (a.id === currentArtistId) {
         artistExists = true;
         return {
@@ -323,7 +314,7 @@ export default function PanelArtistaPage() {
             instagram: profileForm.instagram,
             facebook: profileForm.facebook,
           },
-          status: a.status || 'pending_approval', // Preserve existing status or default to pending
+          status: a.status || 'pending_approval', 
         };
       }
       return a;
@@ -343,7 +334,7 @@ export default function PanelArtistaPage() {
           instagram: profileForm.instagram,
           facebook: profileForm.facebook,
         },
-        status: 'pending_approval', // New artists are pending approval
+        status: 'pending_approval', 
       };
       updatedGlobalArtistsList.push(newArtist);
     }
@@ -366,7 +357,8 @@ export default function PanelArtistaPage() {
       return;
     }
     
-    const artistProfile = globalMockArtists.find(a => a.id === currentArtistId);
+    const currentGlobalArtists = getMockArtists();
+    const artistProfile = currentGlobalArtists.find(a => a.id === currentArtistId);
     if (!artistProfile) {
         toast({ 
           title: "Guarda tu perfil primero", 
@@ -376,15 +368,16 @@ export default function PanelArtistaPage() {
         return;
     }
 
+    let currentGlobalArtworks = getMockArtworks();
     let updatedGlobalArtworksList;
     if (editingArtwork) { 
-      let originalStatus = 'pending'; // Default if somehow not found
-      const originalArtwork = globalMockArtworks.find(art => art.id === editingArtwork.id);
+      let originalStatus = 'pending'; 
+      const originalArtwork = currentGlobalArtworks.find(art => art.id === editingArtwork.id);
       if(originalArtwork) originalStatus = originalArtwork.status || 'pending';
 
       const imageChanged = artworkForm.imageUrl !== editingArtwork.imageUrl && selectedFile; 
 
-      updatedGlobalArtworksList = globalMockArtworks.map(art => {
+      updatedGlobalArtworksList = currentGlobalArtworks.map(art => {
         if (art.id === editingArtwork.id) {
           return {
             ...art,
@@ -412,13 +405,12 @@ export default function PanelArtistaPage() {
         status: 'pending', 
         dataAiHint: artworkForm.dataAiHint,
       };
-      updatedGlobalArtworksList = [...globalMockArtworks, newArtwork];
+      updatedGlobalArtworksList = [...currentGlobalArtworks, newArtwork];
       toast({ title: "Obra subida", description: "Tu obra está pendiente de revisión." });
     }
     
     updateAndSaveArtworks(updatedGlobalArtworksList);
-    // Update local state for UI to reflect changes immediately
-    setArtistArtworks(globalMockArtworks.filter(art => art.artistId === currentArtistId));
+    setArtistArtworks(getMockArtworks().filter(art => art.artistId === currentArtistId));
     resetArtworkForm();
   };
 

@@ -1,18 +1,18 @@
 
 "use client";
 
+import React from 'react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import ArtistCard from '@/app/components/ArtistCard';
-import { mockArtists } from '@/lib/mockData';
+import { getMockArtists } from '@/lib/mockData';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Users } from 'lucide-react';
 
 export default function ArtistasPage() {
-  // Al ser un Client Component, mockArtists se leerá en cada renderización.
-  // Si mockArtists es modificado globalmente, esta página reflejará esos cambios.
-  const artists = mockArtists.filter(a => a.status === 'active');
+  const allArtists = getMockArtists();
+  const artists = allArtists.filter(a => a.status === 'active');
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -45,7 +45,6 @@ export default function ArtistasPage() {
           <p className="text-center text-muted-foreground text-xl">No hay artistas para mostrar en este momento.</p>
         )}
         
-        {/* TODO: Add pagination if many artists */}
       </main>
       <Footer />
     </div>

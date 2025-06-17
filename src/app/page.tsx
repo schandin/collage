@@ -1,30 +1,39 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import ArtworkFullscreenModal from '@/app/components/ArtworkFullscreenModal';
 import ArtistCard from '@/app/components/ArtistCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { mockArtworks, mockArtists } from '@/lib/mockData';
+import { getMockArtworks, getMockArtists } from '@/lib/mockData';
 import type { Artist as ArtistType, Artwork as ArtworkType } from '@/types';
 import { Search, ChevronRight, Palette, Users } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Home() {
-  const featuredArtists = mockArtists.filter(art => art.status === 'active').slice(0, 4);
-  // Removed featuredArtworks direct usage here, will be filtered per artist
+  // Use state for artists and artworks to ensure reactivity if data changes
+  const [featuredArtists, setFeaturedArtists] = useState<ArtistType[]>([]);
+  const [allArtworks, setAllArtworks] = useState<ArtworkType[]>([]);
 
   const [selectedArtworkForModal, setSelectedArtworkForModal] = useState<ArtworkType | null>(null);
   const [selectedArtistForModal, setSelectedArtistForModal] = useState<ArtistType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  useEffect(() => {
+    const currentArtists = getMockArtists();
+    const currentArtworks = getMockArtworks();
+    
+    setFeaturedArtists(currentArtists.filter(art => art.status === 'active').slice(0, 4));
+    setAllArtworks(currentArtworks);
+  }, []); // Re-fetch on mount. For live updates, would need a global state manager or more complex effect.
+
   const handleOpenModal = (artwork: ArtworkType) => {
     setSelectedArtworkForModal(artwork);
-    const artist = mockArtists.find(a => a.id === artwork.artistId);
+    const artist = getMockArtists().find(a => a.id === artwork.artistId); // Get latest artist data
     setSelectedArtistForModal(artist || null);
     setIsModalOpen(true);
   };
@@ -39,11 +48,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow">
-        {/* Hero Section */}
         <section className="relative py-20 md:py-32 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-          <div className="absolute inset-0 opacity-50">
-             {/* Consider adding a subtle background collage image here if desired */}
-          </div>
           <div className="container mx-auto px-4 text-center relative z-10">
             <h1 className="text-5xl md:text-7xl font-headline text-primary mb-6 leading-tight">
               Descubre el Arte del Collage
@@ -62,7 +67,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Galerías Destacadas de Nuestros Artistas Section */}
         <section className="py-16 bg-card">
           <div className="container mx-auto px-4">
             <h2 className="text-4xl font-headline text-primary mb-12 text-center">
@@ -70,7 +74,7 @@ export default function Home() {
             </h2>
             <div className="space-y-12">
               {featuredArtists.map((artist) => {
-                const artistArtworks = mockArtworks.filter(
+                const artistArtworks = allArtworks.filter(
                   (art) => art.artistId === artist.id && art.status === 'approved'
                 ).slice(0, 10);
 
@@ -122,7 +126,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Busca Artistas Section */}
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
             <h2 className="text-4xl font-headline text-primary text-center mb-10">Busca Artistas</h2>
@@ -149,14 +152,13 @@ export default function Home() {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {featuredArtists.map((artist) => ( // Re-using featuredArtists for this section, which is fine.
+              {featuredArtists.map((artist) => (
                 <ArtistCard key={artist.id} artist={artist} />
               ))}
             </div>
           </div>
         </section>
         
-        {/* Call to Action for Artists */}
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-4xl font-headline mb-6">¿Eres Artista de Collage?</h2>

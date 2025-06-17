@@ -6,10 +6,10 @@ import { useParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
 import ArtworkFullscreenModal from '@/app/components/ArtworkFullscreenModal';
-import { mockArtists, mockArtworks } from '@/lib/mockData';
+import { getMockArtists, getMockArtworks } from '@/lib/mockData';
 import type { Artist as ArtistType, Artwork as ArtworkType } from '@/types';
 import Image from 'next/image';
-import { MapPin, Loader2, Palette } from 'lucide-react'; // Added Palette
+import { MapPin, Loader2, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
@@ -24,21 +24,25 @@ export default function ArtistProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
+    setArtist(null);
+    setArtistArtworks([]);
+    
     if (params === null) {
-      setIsLoading(true);
-      setArtist(null);
-      setArtistArtworks([]);
+      setIsLoading(false);
       return;
     }
 
     const currentArtistId = typeof params.id === 'string' ? params.id : null;
 
     if (currentArtistId) {
-      // Ensure we are reading the latest from mockData, which should be updated via localStorage
-      const foundArtist = mockArtists.find(a => a.id === currentArtistId);
+      const currentGlobalArtists = getMockArtists();
+      const currentGlobalArtworks = getMockArtworks();
+      const foundArtist = currentGlobalArtists.find(a => a.id === currentArtistId);
+      
       if (foundArtist) {
         setArtist(foundArtist);
-        const artworks = mockArtworks.filter(art => art.artistId === currentArtistId && art.status === 'approved');
+        const artworks = currentGlobalArtworks.filter(art => art.artistId === currentArtistId && art.status === 'approved');
         setArtistArtworks(artworks);
       } else {
         setArtist(null); 
@@ -113,7 +117,7 @@ export default function ArtistProfilePage() {
               <h2 className="text-3xl font-headline text-primary mb-6">Obras Destacadas</h2>
               {artistArtworks.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {artistArtworks.slice(0, 100).map((artwork) => ( // Show up to 100 artworks, actual limit might depend on plan
+                  {artistArtworks.slice(0, 100).map((artwork) => ( 
                     <button
                       key={artwork.id}
                       onClick={() => handleOpenModal(artwork)}

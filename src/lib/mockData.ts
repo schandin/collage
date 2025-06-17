@@ -75,72 +75,60 @@ const saveToLocalStorage = <T>(key: string, value: T): void => {
   }
 };
 
-// Exported mock data, loaded from localStorage or defaults
-export let mockArtworks: Artwork[] = loadFromLocalStorage<Artwork[]>('mockArtworksData', defaultMockArtworks);
-export let mockArtists: Artist[] = loadFromLocalStorage<Artist[]>('mockArtistsData', defaultMockArtists);
+// Internal state variables
+let _mockArtworks: Artwork[] = loadFromLocalStorage<Artwork[]>('mockArtworksData', defaultMockArtworks);
+let _mockArtists: Artist[] = loadFromLocalStorage<Artist[]>('mockArtistsData', defaultMockArtists);
+
+// Exported getter functions
+export const getMockArtworks = (): Artwork[] => _mockArtworks;
+export const getMockArtists = (): Artist[] => _mockArtists;
 
 // Function to re-synchronize artist names in artworks and artwork lists in artists
 const reSyncData = () => {
-  // Ensure artworks within each artist object are correctly filtered from the main mockArtworks list
-  mockArtists = mockArtists.map(artist => ({
+  // Ensure artworks within each artist object are correctly filtered from the main _mockArtworks list
+  _mockArtists = _mockArtists.map(artist => ({
     ...artist,
-    artworks: mockArtworks.filter(artwork => artwork.artistId === artist.id)
+    artworks: _mockArtworks.filter(artwork => artwork.artistId === artist.id)
   }));
   // Ensure artistName in artworks is correct based on the current artist name
-  mockArtworks = mockArtworks.map(artwork => {
-    const artist = mockArtists.find(a => a.id === artwork.artistId);
+  _mockArtworks = _mockArtworks.map(artwork => {
+    const artist = _mockArtists.find(a => a.id === artwork.artistId);
     return {
       ...artwork,
-      artistName: artist ? artist.name : 'Artista Desconocido' // Fallback if artist not found
+      artistName: artist ? artist.name : 'Artista Desconocido'
     };
   });
 };
 
-// Initial sync and save if loaded from defaults (or if localStorage was empty)
+// Initial sync and save if loaded from defaults
 if (typeof window !== 'undefined') {
   const artworksFromStorage = window.localStorage.getItem('mockArtworksData');
   const artistsFromStorage = window.localStorage.getItem('mockArtistsData');
-
-  let artistsInitializedFromDefaults = false;
-  let artworksInitializedFromDefaults = false;
-
-  if (!artistsFromStorage) {
-    saveToLocalStorage('mockArtistsData', defaultMockArtists);
-    mockArtists = [...defaultMockArtists]; // Use defaults if nothing in storage
-    artistsInitializedFromDefaults = true;
-  }
   
-  if (!artworksFromStorage) {
-    saveToLocalStorage('mockArtworksData', defaultMockArtworks);
-    mockArtworks = [...defaultMockArtworks]; // Use defaults if nothing in storage
-    artworksInitializedFromDefaults = true;
-  }
+  // _mockArtworks and _mockArtists are already initialized by loadFromLocalStorage.
+  // If localStorage was empty, they were initialized with defaultMockArtworks/defaultMockArtists.
 
-  // If either was initialized from defaults, or if data is simply loaded, resync.
-  reSyncData();
+  reSyncData(); // This will sync artist.artworks and artwork.artistName based on current _mockArtists and _mockArtworks
 
-  // If data was initialized from defaults, save the potentially re-synced versions back.
-  if (artistsInitializedFromDefaults) {
-    saveToLocalStorage('mockArtistsData', mockArtists);
-  }
-  if (artworksInitializedFromDefaults) {
-    saveToLocalStorage('mockArtworksData', mockArtworks);
-  }
+  // Save back to localStorage. This ensures that if defaults were used, they get saved.
+  // It also ensures that any reSyncData changes (like populating artist.artworks) are persisted.
+  saveToLocalStorage('mockArtistsData', _mockArtists);
+  saveToLocalStorage('mockArtworksData', _mockArtworks);
 }
 
 // Helper functions to update and save, ensuring data consistency
 export const updateAndSaveArtists = (updatedArtists: Artist[]) => {
-  mockArtists = [...updatedArtists]; // Update the in-memory array (new reference for reactivity)
-  reSyncData(); // Re-sync artist names in artworks and artwork lists in artists
-  saveToLocalStorage('mockArtistsData', mockArtists);
-  saveToLocalStorage('mockArtworksData', mockArtworks); // Save artworks too, as artistName might have changed
+  _mockArtists = [...updatedArtists]; 
+  reSyncData(); 
+  saveToLocalStorage('mockArtistsData', _mockArtists);
+  saveToLocalStorage('mockArtworksData', _mockArtworks); 
 };
 
 export const updateAndSaveArtworks = (updatedArtworks: Artwork[]) => {
-  mockArtworks = [...updatedArtworks]; // Update the in-memory array
-  reSyncData(); // Re-sync artwork lists in artists
-  saveToLocalStorage('mockArtworksData', mockArtworks);
-  saveToLocalStorage('mockArtistsData', mockArtists); // Save artists too, as their artwork lists might change
+  _mockArtworks = [...updatedArtworks]; 
+  reSyncData(); 
+  saveToLocalStorage('mockArtworksData', _mockArtworks);
+  saveToLocalStorage('mockArtistsData', _mockArtists); 
 };
 
 export const mockSubscriptionPlans: SubscriptionPlan[] = [

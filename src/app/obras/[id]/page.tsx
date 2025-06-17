@@ -1,22 +1,61 @@
 
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Header from '@/app/components/Header';
 import Footer from '@/app/components/Footer';
-import { mockArtworks, mockArtists } from '@/lib/mockData';
+import { getMockArtworks, getMockArtists } from '@/lib/mockData';
+import type { Artwork as ArtworkType, Artist as ArtistType } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Palette, UserCircle, DollarSign, ShoppingCart, MessageSquare } from 'lucide-react';
-
-export async function generateStaticParams() {
-  return mockArtworks.map((artwork) => ({
-    id: artwork.id,
-  }));
-}
+import { ArrowLeft, Palette, UserCircle, DollarSign, ShoppingCart, MessageSquare, Loader2 } from 'lucide-react';
 
 export default function ArtworkDetailPage({ params }: { params: { id: string } }) {
-  const artwork = mockArtworks.find(art => art.id === params.id);
-  const artist = artwork ? mockArtists.find(a => a.id === artwork.artistId) : null;
+  const [artwork, setArtwork] = useState<ArtworkType | null>(null);
+  const [artist, setArtist] = useState<ArtistType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  // useParams hook is not needed if params are passed as props.
+  // const routeParams = useParams(); 
+
+  useEffect(() => {
+    setIsLoading(true);
+    const currentArtworkId = params.id;
+
+    if (currentArtworkId) {
+      const currentArtworks = getMockArtworks();
+      const currentArtists = getMockArtists();
+      const foundArtwork = currentArtworks.find(art => art.id === currentArtworkId);
+
+      if (foundArtwork) {
+        setArtwork(foundArtwork);
+        const foundArtist = currentArtists.find(a => a.id === foundArtwork.artistId);
+        setArtist(foundArtist || null);
+      } else {
+        setArtwork(null);
+        setArtist(null);
+      }
+    } else {
+        setArtwork(null);
+        setArtist(null);
+    }
+    setIsLoading(false);
+  }, [params.id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow container mx-auto px-4 py-12 text-center flex flex-col items-center justify-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+          <p>Cargando detalles de la obra...</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!artwork || !artist) {
     return (
@@ -46,7 +85,6 @@ export default function ArtworkDetailPage({ params }: { params: { id: string } }
         </Button>
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
-          {/* Artwork Image */}
           <Card className="shadow-xl overflow-hidden">
             <CardContent className="p-0">
               <div className="aspect-[4/3] relative w-full bg-muted">
@@ -61,7 +99,6 @@ export default function ArtworkDetailPage({ params }: { params: { id: string } }
             </CardContent>
           </Card>
 
-          {/* Artwork Details */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -97,16 +134,12 @@ export default function ArtworkDetailPage({ params }: { params: { id: string } }
                         <li><span className="font-medium text-foreground">Artista:</span> {artist.name}</li>
                         <li><span className="font-medium text-foreground">País:</span> {artist.country}</li>
                         <li><span className="font-medium text-foreground">Subido:</span> {artwork.uploadDate ? new Date(artwork.uploadDate).toLocaleDateString() : 'N/A'}</li>
-                        {/* Add more details like dimensions, materials if available */}
                     </ul>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
-        
-        {/* Related Artworks (Optional) */}
-        {/* This would require fetching more artworks, possibly by the same artist or similar style */}
       </main>
       <Footer />
     </div>
