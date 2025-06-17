@@ -101,7 +101,7 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-4xl font-headline text-primary mb-12 text-center flex items-center justify-center">
               <ShieldCheck className="w-10 h-10 mr-3 text-purple-500" /> {/* Icon for Priority */}
-              Artistas Priority Destacados
+              Artistas Destacados
             </h2>
             {priorityArtistsData.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -131,7 +131,7 @@ export default function Home() {
           <div className="container mx-auto px-4">
             <h2 className="text-4xl font-headline text-primary text-center mb-12 flex items-center justify-center">
               <Star className="w-10 h-10 mr-3 text-yellow-500" /> {/* Icon for Advanced */}
-              Galería de Artistas Avanzados
+              Galería de Artistas
             </h2>
             {advancedArtistsData.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"> {/* Up to 6, so 3 per row on medium+ */}
