@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from '@/hooks/use-toast';
 import { mockSubscriptionPlans } from '@/lib/mockData';
 import type { SubscriptionPlan } from '@/types';
-import { CreditCard, CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { CreditCard, CheckCircle, ArrowLeft, Loader2, RefreshCw, Landmark, CircleDollarSign, Gift } from 'lucide-react'; // Added new icons
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -19,43 +19,44 @@ export default function PaymentPage() {
   const { toast } = useToast();
   
   const [isLoading, setIsLoading] = useState(true);
-  // undefined: not yet processed, null: processed but not found, SubscriptionPlan: found
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null | undefined>(undefined); 
 
   useEffect(() => {
     if (params === null) {
-      setIsLoading(true); // Params not yet loaded
-      setSelectedPlan(undefined); // Reset selected plan state
+      setIsLoading(true); 
+      setSelectedPlan(undefined); 
       return;
     }
 
     const currentPlanId = typeof params.planId === 'string' ? params.planId : '';
     const foundPlan = mockSubscriptionPlans.find(p => p.id === currentPlanId);
 
-    if (currentPlanId && !foundPlan) { // Plan ID was provided in URL, but plan not found in mockData
+    if (currentPlanId && !foundPlan) { 
       toast({
         title: "Plan no encontrado",
         description: "El plan de suscripción seleccionado no es válido.",
         variant: "destructive",
       });
       router.push('/suscripciones');
-      // No need to set loading/plan state here as navigation will occur
       return; 
     }
     
-    setSelectedPlan(foundPlan || null); // Set to found plan, or null if currentPlanId was empty or no match
+    setSelectedPlan(foundPlan || null); 
     setIsLoading(false);
 
   }, [params, router, toast]);
 
   const handlePaymentConfirmation = () => {
+    if (!selectedPlan) return;
+
     localStorage.setItem('isArtistAuthenticated', 'true');
     const newArtistId = `newArtist-${Date.now()}`;
     localStorage.setItem('currentArtistId', newArtistId);
+    localStorage.setItem('pendingSubscriptionPlanId', selectedPlan.id); // Save selected plan ID
     
     toast({
       title: "¡Pago Confirmado!",
-      description: "Tu suscripción ha sido activada. Redirigiendo al panel de artista...",
+      description: "Tu suscripción ha sido activada. Redirigiendo al panel de artista para completar tu perfil...",
     });
     router.push('/panel-artista');
   };
@@ -73,7 +74,7 @@ export default function PaymentPage() {
     );
   }
 
-  if (!selectedPlan) { // Params loaded, plan lookup done, but no plan found (e.g. invalid planId in URL or planId was empty)
+  if (!selectedPlan) { 
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -106,25 +107,49 @@ export default function PaymentPage() {
           </Button>
           <Card className="shadow-2xl">
             <CardHeader className="text-center">
-              <CreditCard className="w-16 h-16 mx-auto text-primary mb-4" />
+              <CircleDollarSign className="w-16 h-16 mx-auto text-primary mb-4" />
               <CardTitle className="text-3xl font-headline">Confirmar Suscripción</CardTitle>
               <CardDescription>Estás a punto de suscribirte al plan: <span className="font-semibold text-accent">{selectedPlan.name}</span>.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="p-6 bg-muted/30 rounded-lg">
+              <div className="p-6 bg-muted/30 rounded-lg border border-border">
                 <h3 className="text-xl font-semibold text-primary mb-3">Detalles del Plan: {selectedPlan.name}</h3>
                 <p className="text-3xl font-bold text-accent">${selectedPlan.pricePerMonth} <span className="text-sm text-muted-foreground">/mes</span></p>
-                <ul className="space-y-1 text-sm text-muted-foreground">
+                <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
                   {selectedPlan.features.map((feature, index) => (
                     <li key={index} className="flex items-center">
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                      <CheckCircle className="w-4 h-4 mr-2 text-green-500 shrink-0" />
                       {feature}
                     </li>
                   ))}
                 </ul>
+                 <p className="text-xs text-muted-foreground mt-4 flex items-center">
+                  <RefreshCw className="w-3 h-3 mr-1.5 text-blue-500"/> Siempre podrás cambiarte de plan si lo requieres.
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground text-center">
-                Esta es una simulación de pago. Al confirmar, se activará tu acceso al panel de artista.
+
+              <div>
+                <h4 className="text-lg font-semibold text-primary mb-3">Métodos de Pago (Simulado)</h4>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start text-base py-3 h-auto">
+                    <CreditCard className="w-5 h-5 mr-3 text-blue-500"/> Tarjeta de Crédito / Débito
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start text-base py-3 h-auto">
+                    {/* Using CreditCard as a stand-in for PayPal icon */}
+                    <CreditCard className="w-5 h-5 mr-3 text-sky-600"/> PayPal
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start text-base py-3 h-auto">
+                    <Landmark className="w-5 h-5 mr-3 text-green-600"/> Transferencia Bancaria
+                  </Button>
+                   <Button variant="outline" className="w-full justify-start text-base py-3 h-auto relative group">
+                    <Gift className="w-5 h-5 mr-3 text-red-500"/> Apóyanos en Patreon 
+                    <span className="ml-auto text-xs bg-accent text-accent-foreground px-2 py-0.5 rounded-full group-hover:bg-accent/80">Beneficios Extra</span>
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground text-center pt-2">
+                Esta es una simulación de pago. Al confirmar, se activará tu acceso para completar tu perfil de artista.
               </p>
             </CardContent>
             <CardFooter>
@@ -133,7 +158,7 @@ export default function PaymentPage() {
                 className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base"
               >
                 <CheckCircle className="w-5 h-5 mr-2" />
-                Confirmar Pago y Acceder al Panel
+                Confirmar Pago y Completar Perfil
               </Button>
             </CardFooter>
           </Card>
@@ -143,3 +168,5 @@ export default function PaymentPage() {
     </div>
   );
 }
+
+    

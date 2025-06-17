@@ -55,6 +55,7 @@ export default function PanelArtistaPage() {
     dataAiHint: '', 
     instagram: '',
     facebook: '',
+    subscriptionPlanId: '', // Added to store the plan ID
   });
   
   const [profileSelectedFile, setProfileSelectedFile] = useState<File | null>(null);
@@ -100,14 +101,25 @@ export default function PanelArtistaPage() {
         dataAiHint: existingArtist.dataAiHint || '',
         instagram: existingArtist.socialMedia?.instagram || '',
         facebook: existingArtist.socialMedia?.facebook || '',
+        subscriptionPlanId: existingArtist.subscriptionPlanId || '',
       });
       if (existingArtist.profileImageUrl) { 
           setProfileImagePreviewUrl(existingArtist.profileImageUrl);
       }
       setArtistArtworks(currentGlobalArtworks.filter(art => art.artistId === artistIdFromStorage));
     } else if (artistIdFromStorage.startsWith('newArtist-')) {
-      // For new artists, initialize form with empty or default values, especially email
-      setProfileForm({ name: '', country: '', bio: '', email: '', profileImageUrl: '', dataAiHint: '', instagram: '', facebook: '' });
+      const pendingPlanId = localStorage.getItem('pendingSubscriptionPlanId') || '';
+      setProfileForm({ 
+        name: '', 
+        country: '', 
+        bio: '', 
+        email: '', 
+        profileImageUrl: '', 
+        dataAiHint: '', 
+        instagram: '', 
+        facebook: '',
+        subscriptionPlanId: pendingPlanId, // Initialize with pending plan
+      });
       setArtistArtworks([]);
     }
     
@@ -313,8 +325,8 @@ export default function PanelArtistaPage() {
           name: profileForm.name,
           country: profileForm.country,
           bio: profileForm.bio,
-          email: profileForm.email, // Ensure email from form is used
-          password: a.password || (currentArtistId.startsWith('newArtist-') ? "password123" : undefined), // Assign default password if new and no password exists
+          email: profileForm.email,
+          password: a.password || (currentArtistId.startsWith('newArtist-') ? "password123" : undefined),
           profileImageUrl: finalProfileImageUrl,
           dataAiHint: profileForm.dataAiHint,
           socialMedia: {
@@ -322,20 +334,22 @@ export default function PanelArtistaPage() {
             facebook: profileForm.facebook,
           },
           status: a.status || 'pending_approval', 
+          subscriptionPlanId: profileForm.subscriptionPlanId || a.subscriptionPlanId, // Use form plan or existing
         };
       }
       return a;
     });
 
     if (!artistExists && currentArtistId.startsWith('newArtist-')) { 
+      const pendingPlanId = localStorage.getItem('pendingSubscriptionPlanId');
       const newArtist: Artist = {
         id: currentArtistId,
         name: profileForm.name,
         country: profileForm.country,
         profileImageUrl: finalProfileImageUrl,
         dataAiHint: profileForm.dataAiHint,
-        email: profileForm.email, // Crucial: email from form
-        password: "password123", // Default password for new artists
+        email: profileForm.email, 
+        password: "password123", 
         bio: profileForm.bio,
         artworks: [], 
         socialMedia: {
@@ -343,8 +357,12 @@ export default function PanelArtistaPage() {
           facebook: profileForm.facebook,
         },
         status: 'pending_approval', 
+        subscriptionPlanId: pendingPlanId || undefined, // Assign plan from localStorage
       };
       updatedGlobalArtistsList.push(newArtist);
+      if (pendingPlanId) {
+        localStorage.removeItem('pendingSubscriptionPlanId'); // Clean up
+      }
     }
     updateAndSaveArtists(updatedGlobalArtistsList);
     toast({ title: "Perfil guardado", description: "Tu información ha sido actualizada. Si eres un nuevo artista o cambiaste tu foto/email, tu perfil pasará a revisión y podrás iniciar sesión con este email y la contraseña 'password123'." });
@@ -367,7 +385,7 @@ export default function PanelArtistaPage() {
     
     const currentGlobalArtists = getMockArtists();
     const artistProfile = currentGlobalArtists.find(a => a.id === currentArtistId);
-    if (!artistProfile || !artistProfile.email) { // Check if profile (especially email) is saved
+    if (!artistProfile || !artistProfile.email) { 
         toast({ 
           title: "Guarda tu perfil primero", 
           description: "Para subir obras, tu perfil de artista (incluyendo un email válido) debe estar guardado. Ve a la pestaña 'Mi Perfil' y guarda tus datos.", 
@@ -401,12 +419,13 @@ export default function PanelArtistaPage() {
       });
       toast({ title: "Obra actualizada", description: imageChanged && originalStatus === 'approved' ? "Cambios guardados. La obra requerirá nueva aprobación por cambio de imagen." : "Cambios guardados." });
     } else { 
+      const newArtistName = artistProfile ? artistProfile.name : 'Artista Desconocido';
       const newArtwork: Artwork = {
         id: `art-${Date.now()}`,
         title: artworkForm.title,
         imageUrl: finalImageUrl, 
         artistId: currentArtistId,
-        artistName: artistProfile.name, 
+        artistName: newArtistName, 
         price: parseFloat(artworkForm.price) || undefined,
         description: artworkForm.description,
         uploadDate: new Date().toISOString().split('T')[0],
@@ -448,7 +467,8 @@ export default function PanelArtistaPage() {
           <h1 className="text-4xl font-headline text-primary">Panel de Artista</h1>
           <Button variant="outline" onClick={() => { 
             localStorage.removeItem('isArtistAuthenticated'); 
-            localStorage.removeItem('currentArtistId'); 
+            localStorage.removeItem('currentArtistId');
+            localStorage.removeItem('pendingSubscriptionPlanId'); // Clean up plan ID on logout
             router.push('/');
           }}>
             Cerrar Sesión
@@ -613,7 +633,7 @@ export default function PanelArtistaPage() {
               <form onSubmit={handleProfileSubmit}>
                 <CardHeader>
                   <CardTitle>Actualiza tu Perfil</CardTitle>
-                  <CardDescription>Mantén tu información de contacto y personal al día.</CardDescription>
+                  <CardDescription>Mantén tu información de contacto y personal al día. Si es tu primer ingreso, completa todos los campos.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div>
@@ -665,7 +685,7 @@ export default function PanelArtistaPage() {
                   </div>
                   <div>
                     <Label htmlFor="artist-dataAiHint" className="text-base">Palabras clave para IA (foto perfil)</Label>
-                    <Input id="artist-dataAiHint" placeholder="Dos palabras max." value={profileForm.dataAiHint} onChange={handleProfileFormChange} className="mt-1 text-base" />
+                    <Input id="artist-dataAiHint" placeholder="Dos palabras max. ej: abstract portrait" value={profileForm.dataAiHint} onChange={handleProfileFormChange} className="mt-1 text-base" />
                   </div>
                   <div>
                     <Label htmlFor="artist-name" className="text-base">Nombre de Artista</Label>
@@ -684,18 +704,18 @@ export default function PanelArtistaPage() {
                     <Input id="artist-email" type="email" placeholder="tu@email.com" value={profileForm.email} onChange={handleProfileFormChange} className="mt-1 text-base" required/>
                   </div>
                   <div>
-                    <Label htmlFor="artist-instagram" className="text-base">Instagram (usuario)</Label>
+                    <Label htmlFor="artist-instagram" className="text-base">Instagram (usuario sin @)</Label>
                     <Input id="artist-instagram" placeholder="ej: tu_usuario_insta" value={profileForm.instagram} onChange={handleProfileFormChange} className="mt-1 text-base" />
                   </div>
                   <div>
-                    <Label htmlFor="artist-facebook" className="text-base">Facebook (URL perfil/página)</Label>
+                    <Label htmlFor="artist-facebook" className="text-base">Facebook (URL perfil/página completa)</Label>
                     <Input id="artist-facebook" placeholder="ej: https://facebook.com/tuperfil" value={profileForm.facebook} onChange={handleProfileFormChange} className="mt-1 text-base" />
                   </div>
                 </CardContent>
                 <CardFooter>
                   <Button type="submit" className="ml-auto bg-accent text-accent-foreground hover:bg-accent/90" disabled={isProfileImageProcessing}>
                     {isProfileImageProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                     Guardar Cambios
+                     Guardar Perfil
                   </Button>
                 </CardFooter>
               </form>
@@ -708,3 +728,4 @@ export default function PanelArtistaPage() {
   );
 }
 
+    
