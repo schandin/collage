@@ -39,8 +39,8 @@ export default function PanelArtistaPage() {
     imageUrl: '', 
     price: '',
     dataAiHint: '',
-    size: '', // Nuevo campo
-    technique: '', // Nuevo campo
+    size: '', 
+    technique: '', 
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -542,7 +542,8 @@ export default function PanelArtistaPage() {
                         return;
                     }
                     resetArtworkForm(); 
-                    document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"]')?.click();
+                    const tabTrigger = document.querySelector<HTMLButtonElement>('button[data-state="inactive"][value="subir-obra"], button[data-state="active"][value="subir-obra"]');
+                    tabTrigger?.click();
                   }} 
                   className="ml-auto bg-accent text-accent-foreground hover:bg-accent/90"
                 >
