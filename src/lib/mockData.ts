@@ -1,5 +1,5 @@
 
-import type { Artist, Artwork, SubscriptionPlan } from '@/types';
+import type { Artist, Artwork, SubscriptionPlan, SubscriptionRecord } from '@/types';
 
 // Default data if nothing is in localStorage
 const defaultMockArtworks: Artwork[] = [
@@ -21,7 +21,7 @@ const defaultMockArtists: Artist[] = [
     password: 'password123',
     socialMedia: { instagram: 'elena_art', facebook: 'elena.art.fb' },
     bio: 'Artista visual especializada en collage analógico y digital. Mi obra explora la feminidad y la naturaleza.',
-    artworks: [], // Se poblará dinámicamente
+    artworks: [], 
     dataAiHint: 'artist portrait',
     status: 'active',
     subscriptionPlanId: 'plan2', 
@@ -35,7 +35,7 @@ const defaultMockArtists: Artist[] = [
     password: 'password123',
     socialMedia: { twitter: 'carlosg_collage' },
     bio: 'Apasionado por el collage surrealista, combino elementos vintage con técnicas modernas para crear mundos oníricos.',
-    artworks: [], // Se poblará dinámicamente
+    artworks: [], 
     dataAiHint: 'artist studio',
     status: 'active',
     subscriptionPlanId: 'plan2', 
@@ -48,12 +48,14 @@ const defaultMockArtists: Artist[] = [
     email: 'ana.silva@example.com',
     password: 'password123',
     bio: 'Collages que fusionan la cultura pop con la crítica social, utilizando colores vibrantes y mensajes directos.',
-    artworks: [], // Se poblará dinámicamente
+    artworks: [], 
     dataAiHint: 'woman artist',
     status: 'pending_approval',
     subscriptionPlanId: 'plan1', 
   },
 ];
+
+const defaultMockSubscriptionRecords: SubscriptionRecord[] = [];
 
 // Functions to load from localStorage
 const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
@@ -84,21 +86,17 @@ const saveToLocalStorage = <T>(key: string, value: T): void => {
 // Internal state variables
 let _mockArtworksGlobal: Artwork[] = loadFromLocalStorage<Artwork[]>('mockArtworksData', defaultMockArtworks);
 let _mockArtistsGlobal: Artist[] = loadFromLocalStorage<Artist[]>('mockArtistsData', defaultMockArtists);
+let _mockSubscriptionRecordsGlobal: SubscriptionRecord[] = loadFromLocalStorage<SubscriptionRecord[]>('mockSubscriptionRecordsData', defaultMockSubscriptionRecords);
+
 
 // Exported getter functions
 export const getMockArtworks = (): Artwork[] => JSON.parse(JSON.stringify(_mockArtworksGlobal));
 export const getMockArtists = (): Artist[] => JSON.parse(JSON.stringify(_mockArtistsGlobal));
+export const getMockSubscriptionRecords = (): SubscriptionRecord[] => JSON.parse(JSON.stringify(_mockSubscriptionRecordsGlobal));
 
 
-// Function to re-synchronize artist names in artworks and artwork lists in artists
 const reSyncData = () => {
-  // First, ensure all artists have an artworks array
    _mockArtistsGlobal = _mockArtistsGlobal.map(artist => ({
-    ...artist,
-    artworks: artist.artworks || [] 
-  }));
-
-  _mockArtistsGlobal = _mockArtistsGlobal.map(artist => ({
     ...artist,
     artworks: _mockArtworksGlobal.filter(artwork => artwork.artistId === artist.id)
   }));
@@ -115,6 +113,7 @@ const reSyncData = () => {
 if (typeof window !== 'undefined') {
   const artworksFromStorage = window.localStorage.getItem('mockArtworksData');
   const artistsFromStorage = window.localStorage.getItem('mockArtistsData');
+  const subscriptionRecordsFromStorage = window.localStorage.getItem('mockSubscriptionRecordsData');
 
   if (!artworksFromStorage) {
     saveToLocalStorage('mockArtworksData', defaultMockArtworks);
@@ -124,10 +123,13 @@ if (typeof window !== 'undefined') {
     saveToLocalStorage('mockArtistsData', defaultMockArtists);
     _mockArtistsGlobal = defaultMockArtists;
   }
-  reSyncData(); // Ensure data is synced on initial load
+  if (!subscriptionRecordsFromStorage) {
+    saveToLocalStorage('mockSubscriptionRecordsData', defaultMockSubscriptionRecords);
+    _mockSubscriptionRecordsGlobal = defaultMockSubscriptionRecords;
+  }
+  reSyncData(); 
 }
 
-// Helper functions to update and save, ensuring data consistency
 export const updateAndSaveArtists = (updatedArtists: Artist[]) => {
   _mockArtistsGlobal = [...updatedArtists]; 
   reSyncData(); 
@@ -142,6 +144,10 @@ export const updateAndSaveArtworks = (updatedArtworks: Artwork[]) => {
   saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); 
 };
 
+export const addSubscriptionRecord = (newRecord: SubscriptionRecord) => {
+  _mockSubscriptionRecordsGlobal = [..._mockSubscriptionRecordsGlobal, newRecord];
+  saveToLocalStorage('mockSubscriptionRecordsData', _mockSubscriptionRecordsGlobal);
+};
 
 export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {

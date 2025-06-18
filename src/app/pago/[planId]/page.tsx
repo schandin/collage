@@ -11,8 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { mockSubscriptionPlans, getMockArtists, updateAndSaveArtists } from '@/lib/mockData';
-import type { SubscriptionPlan, Artist } from '@/types';
+import { mockSubscriptionPlans, getMockArtists, updateAndSaveArtists, addSubscriptionRecord } from '@/lib/mockData';
+import type { SubscriptionPlan, Artist, SubscriptionRecord } from '@/types';
 import { CreditCard, CheckCircle, ArrowLeft, Loader2, RefreshCw, Landmark, CircleDollarSign, Gift, Mail, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 export default function PaymentPage() {
@@ -42,8 +42,6 @@ export default function PaymentPage() {
         variant: "destructive",
       });
       router.push('/suscripciones');
-      // No need to explicitly setIsLoading(false) here if redirecting,
-      // but if there were a state where it didn't redirect, it would be needed.
       return; 
     }
 
@@ -110,9 +108,20 @@ export default function PaymentPage() {
     const currentArtists = getMockArtists();
     updateAndSaveArtists([...currentArtists, newArtist]);
     
+    const newSubscriptionRecord: SubscriptionRecord = {
+      id: `subrecord-${Date.now()}`,
+      artistId: newArtistId,
+      artistEmail: email,
+      planId: selectedPlan.id,
+      planName: selectedPlan.name,
+      paymentMethod: "Tarjeta (Simulada)", // Placeholder for simulated payment
+      subscriptionDate: new Date().toISOString(),
+      status: 'Confirmado',
+    };
+    addSubscriptionRecord(newSubscriptionRecord);
+    
     localStorage.setItem('isArtistAuthenticated', 'true');
     localStorage.setItem('currentArtistId', newArtistId);
-    // localStorage.removeItem('pendingSubscriptionPlanId'); // This was used before direct planId in newArtist. Not needed now.
     
     toast({
       title: "¡Pre-registro exitoso!",
@@ -135,8 +144,6 @@ export default function PaymentPage() {
   }
 
   if (!selectedPlan) { 
-    // This case should ideally be handled by the useEffect redirecting,
-    // but as a fallback or if redirects are slow.
     return (
       <div className="flex flex-col min-h-screen">
         <Header />

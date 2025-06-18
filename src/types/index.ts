@@ -10,8 +10,8 @@ export interface Artwork {
   uploadDate?: string;
   status?: 'pending' | 'approved' | 'rejected';
   dataAiHint?: string;
-  size?: string; // Nuevo campo
-  technique?: string; // Nuevo campo
+  size?: string; 
+  technique?: string; 
 }
 
 export interface Artist {
@@ -39,4 +39,15 @@ export interface SubscriptionPlan {
   pricePerMonth: number;
   photoLimit: number;
   features: string[];
+}
+
+export interface SubscriptionRecord {
+  id: string;
+  artistId: string;
+  artistEmail: string;
+  planId: string;
+  planName: string;
+  paymentMethod: string; // e.g., "Tarjeta (Simulada)", "PayPal (Simulada)"
+  subscriptionDate: string; // ISO date string
+  status: 'Confirmado' | 'Pendiente'; // Example statuses
 }

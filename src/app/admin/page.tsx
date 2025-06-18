@@ -9,15 +9,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, BadgeDollarSign, Star } from 'lucide-react';
+import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, BadgeDollarSign, Star, CalendarDays, Receipt } from 'lucide-react';
 import { 
   getMockArtists,
   getMockArtworks,
+  getMockSubscriptionRecords,
   updateAndSaveArtists,
   updateAndSaveArtworks,
-  mockSubscriptionPlans // Importar los planes de suscripción
+  mockSubscriptionPlans 
 } from '@/lib/mockData';
-import type { Artist, Artwork } from '@/types';
+import type { Artist, Artwork, SubscriptionPlan, SubscriptionRecord } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -28,6 +29,7 @@ export default function AdminDashboardPage() {
   
   const [artistsForUI, setArtistsForUI] = useState<Artist[]>([]);
   const [pendingArtworksForUI, setPendingArtworksForUI] = useState<Artwork[]>([]);
+  const [subscriptionRecordsForUI, setSubscriptionRecordsForUI] = useState<SubscriptionRecord[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -36,12 +38,15 @@ export default function AdminDashboardPage() {
       router.push('/admin/login');
     } else {
       setIsAuthenticated(true);
-      // Initial sync of UI state with global mock data using getters
-      setArtistsForUI(getMockArtists().map(a => ({...a})));
-      const currentArtworksFromGlobal = getMockArtworks().map(art => ({...art}));
-      setPendingArtworksForUI(currentArtworksFromGlobal.filter(art => art.status === 'pending'));
+      refreshAllUIData();
     }
   }, [router]);
+
+  const refreshAllUIData = () => {
+    refreshArtistsUI();
+    refreshArtworksUI();
+    refreshSubscriptionRecordsUI();
+  }
 
   const refreshArtistsUI = () => {
     setArtistsForUI(getMockArtists().map(a => ({...a})));
@@ -51,6 +56,10 @@ export default function AdminDashboardPage() {
     const currentArtworksFromGlobal = getMockArtworks().map(art => ({...art}));
     setPendingArtworksForUI(currentArtworksFromGlobal.filter(art => art.status === 'pending'));
   };
+
+  const refreshSubscriptionRecordsUI = () => {
+    setSubscriptionRecordsForUI(getMockSubscriptionRecords().map(sr => ({...sr})));
+  }
 
   const handleApproveArtist = (artistId: string) => {
     const currentGlobalArtists = getMockArtists();
@@ -193,10 +202,17 @@ export default function AdminDashboardPage() {
                           {getPlanBadge(artist.subscriptionPlanId)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={artist.status === 'active' ? 'default' : artist.status === 'pending_approval' ? 'secondary' : 'destructive'}
-                           className={artist.status === 'active' ? 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200' : artist.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800 border-yellow-400 hover:bg-yellow-200' : 'bg-red-100 text-red-800 border-red-400 hover:bg-red-200'}
+                          <Badge variant={artist.status === 'active' ? 'default' : artist.status === 'pending_approval' ? 'secondary' : artist.status === 'profile_incomplete' ? 'secondary' : 'destructive'}
+                           className={
+                             artist.status === 'active' ? 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200' 
+                             : (artist.status === 'pending_approval' || artist.status === 'profile_incomplete') ? 'bg-yellow-100 text-yellow-800 border-yellow-400 hover:bg-yellow-200' 
+                             : 'bg-red-100 text-red-800 border-red-400 hover:bg-red-200'
+                            }
                           >
-                            {artist.status === 'active' ? 'Activo' : artist.status === 'pending_approval' ? 'Pendiente' : 'Bloqueado'}
+                            {artist.status === 'active' ? 'Activo' 
+                             : artist.status === 'pending_approval' ? 'Pendiente Aprob.'
+                             : artist.status === 'profile_incomplete' ? 'Perfil Incomp.'
+                             : 'Bloqueado'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-1">
@@ -254,15 +270,46 @@ export default function AdminDashboardPage() {
           <TabsContent value="verify-payments">
             <Card>
               <CardHeader>
-                <CardTitle>Verificación de Pagos</CardTitle>
-                <CardDescription>Esta sección es para verificar los pagos de suscripciones (funcionalidad por implementar).</CardDescription>
+                <CardTitle>Registros de Suscripciones</CardTitle>
+                <CardDescription>Visualiza los pagos de suscripciones (simulados) registrados en la plataforma.</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">Aquí se mostraría una lista de transacciones y estados de pago...</p>
-                <div className="mt-4 border-2 border-dashed border-border rounded-lg p-10 text-center">
+                {subscriptionRecordsForUI.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email del Artista</TableHead>
+                        <TableHead>Plan Suscrito</TableHead>
+                        <TableHead>Método de Pago</TableHead>
+                        <TableHead>Fecha de Suscripción</TableHead>
+                        <TableHead>Estado</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {subscriptionRecordsForUI.map((record) => (
+                        <TableRow key={record.id}>
+                          <TableCell className="font-medium truncate" title={record.artistEmail}>{record.artistEmail}</TableCell>
+                          <TableCell>{record.planName}</TableCell>
+                          <TableCell>{record.paymentMethod}</TableCell>
+                          <TableCell>{new Date(record.subscriptionDate).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                             <Badge variant={record.status === 'Confirmado' ? 'default' : 'secondary'}
+                               className={record.status === 'Confirmado' ? 'bg-green-100 text-green-800 border-green-400' : 'bg-yellow-100 text-yellow-800 border-yellow-400'}
+                             >
+                              <Receipt className="w-3 h-3 mr-1.5"/>
+                              {record.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="mt-4 border-2 border-dashed border-border rounded-lg p-10 text-center">
                     <DollarSign className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">La gestión de pagos aún no está implementada.</p>
-                </div>
+                    <p className="text-muted-foreground">Aún no hay registros de suscripciones.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
