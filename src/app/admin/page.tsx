@@ -9,16 +9,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, BadgeDollarSign, Star, CalendarDays, Receipt, Settings, Tag, FileText } from 'lucide-react';
+import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, BadgeDollarSign, Star, CalendarDays, Receipt, Settings, Tag, FileText, MailCheck } from 'lucide-react';
 import { 
   getMockArtists,
   getMockArtworks,
   getMockSubscriptionRecords,
+  getMockNewsletterSubscriptions,
   updateAndSaveArtists,
   updateAndSaveArtworks,
   mockSubscriptionPlans 
 } from '@/lib/mockData';
-import type { Artist, Artwork, SubscriptionPlan, SubscriptionRecord } from '@/types';
+import type { Artist, Artwork, SubscriptionPlan, SubscriptionRecord, NewsletterSubscription } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +31,7 @@ export default function AdminDashboardPage() {
   const [artistsForUI, setArtistsForUI] = useState<Artist[]>([]);
   const [pendingArtworksForUI, setPendingArtworksForUI] = useState<Artwork[]>([]);
   const [subscriptionRecordsForUI, setSubscriptionRecordsForUI] = useState<SubscriptionRecord[]>([]);
+  const [newsletterSubscriptionsForUI, setNewsletterSubscriptionsForUI] = useState<NewsletterSubscription[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function AdminDashboardPage() {
     refreshArtistsUI();
     refreshArtworksUI();
     refreshSubscriptionRecordsUI();
+    refreshNewsletterSubscriptionsUI();
   }
 
   const refreshArtistsUI = () => {
@@ -59,6 +62,10 @@ export default function AdminDashboardPage() {
 
   const refreshSubscriptionRecordsUI = () => {
     setSubscriptionRecordsForUI(getMockSubscriptionRecords().map(sr => ({...sr})));
+  }
+
+  const refreshNewsletterSubscriptionsUI = () => {
+    setNewsletterSubscriptionsForUI(getMockNewsletterSubscriptions().map(ns => ({...ns})));
   }
 
   const handleApproveArtist = (artistId: string) => {
@@ -155,10 +162,11 @@ export default function AdminDashboardPage() {
         </div>
 
         <Tabs defaultValue="manage-artists" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2 mb-6">
             <TabsTrigger value="manage-artists" className="py-3"><Users className="w-5 h-5 mr-2" />Gestionar Artistas</TabsTrigger>
             <TabsTrigger value="moderate-content" className="py-3"><ImageIconLucide className="w-5 h-5 mr-2" />Moderar Obras</TabsTrigger>
             <TabsTrigger value="verify-payments" className="py-3"><DollarSign className="w-5 h-5 mr-2" />Verificar Pagos</TabsTrigger>
+            <TabsTrigger value="newsletter-subscribers" className="py-3"><MailCheck className="w-5 h-5 mr-2" />Suscriptores Newsletter</TabsTrigger>
             <TabsTrigger value="site-settings" className="py-3"><Settings className="w-5 h-5 mr-2" />Configuración</TabsTrigger>
           </TabsList>
 
@@ -313,6 +321,40 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="newsletter-subscribers">
+            <Card>
+              <CardHeader>
+                <CardTitle>Suscriptores del Newsletter</CardTitle>
+                <CardDescription>Lista de usuarios que se han suscrito al newsletter.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {newsletterSubscriptionsForUI.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email del Suscriptor</TableHead>
+                        <TableHead>Fecha de Suscripción</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {newsletterSubscriptionsForUI.map((sub) => (
+                        <TableRow key={sub.id}>
+                          <TableCell className="font-medium truncate" title={sub.email}>{sub.email}</TableCell>
+                          <TableCell>{new Date(sub.subscriptionDate).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="mt-4 border-2 border-dashed border-border rounded-lg p-10 text-center">
+                    <MailCheck className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Aún no hay suscriptores al newsletter.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
           
           <TabsContent value="site-settings">
             <Card>
@@ -363,4 +405,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-

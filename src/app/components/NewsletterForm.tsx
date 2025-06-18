@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -5,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Mail } from 'lucide-react';
+import { addNewsletterSubscription } from '@/lib/mockData';
+import type { NewsletterSubscription } from '@/types';
 
 export default function NewsletterForm() {
   const [email, setEmail] = useState('');
@@ -20,8 +23,14 @@ export default function NewsletterForm() {
       });
       return;
     }
-    // Here you would typically send the email to your backend
-    console.log('Newsletter subscription for:', email);
+    
+    const newSubscription: NewsletterSubscription = {
+      id: `nlsub-${Date.now()}`,
+      email: email,
+      subscriptionDate: new Date().toISOString(),
+    };
+    addNewsletterSubscription(newSubscription);
+    
     toast({
       title: "¡Gracias por suscribirte!",
       description: "Recibirás nuestras novedades pronto.",

@@ -1,5 +1,5 @@
 
-import type { Artist, Artwork, SubscriptionPlan, SubscriptionRecord } from '@/types';
+import type { Artist, Artwork, SubscriptionPlan, SubscriptionRecord, NewsletterSubscription } from '@/types';
 
 // Default data if nothing is in localStorage
 const defaultMockArtworks: Artwork[] = [
@@ -56,6 +56,7 @@ const defaultMockArtists: Artist[] = [
 ];
 
 const defaultMockSubscriptionRecords: SubscriptionRecord[] = [];
+const defaultMockNewsletterSubscriptions: NewsletterSubscription[] = [];
 
 // Functions to load from localStorage
 const loadFromLocalStorage = <T>(key: string, defaultValue: T): T => {
@@ -87,12 +88,14 @@ const saveToLocalStorage = <T>(key: string, value: T): void => {
 let _mockArtworksGlobal: Artwork[] = loadFromLocalStorage<Artwork[]>('mockArtworksData', defaultMockArtworks);
 let _mockArtistsGlobal: Artist[] = loadFromLocalStorage<Artist[]>('mockArtistsData', defaultMockArtists);
 let _mockSubscriptionRecordsGlobal: SubscriptionRecord[] = loadFromLocalStorage<SubscriptionRecord[]>('mockSubscriptionRecordsData', defaultMockSubscriptionRecords);
+let _mockNewsletterSubscriptionsGlobal: NewsletterSubscription[] = loadFromLocalStorage<NewsletterSubscription[]>('mockNewsletterSubscriptionsData', defaultMockNewsletterSubscriptions);
 
 
 // Exported getter functions
 export const getMockArtworks = (): Artwork[] => JSON.parse(JSON.stringify(_mockArtworksGlobal));
 export const getMockArtists = (): Artist[] => JSON.parse(JSON.stringify(_mockArtistsGlobal));
 export const getMockSubscriptionRecords = (): SubscriptionRecord[] => JSON.parse(JSON.stringify(_mockSubscriptionRecordsGlobal));
+export const getMockNewsletterSubscriptions = (): NewsletterSubscription[] => JSON.parse(JSON.stringify(_mockNewsletterSubscriptionsGlobal));
 
 
 const reSyncData = () => {
@@ -114,6 +117,7 @@ if (typeof window !== 'undefined') {
   const artworksFromStorage = window.localStorage.getItem('mockArtworksData');
   const artistsFromStorage = window.localStorage.getItem('mockArtistsData');
   const subscriptionRecordsFromStorage = window.localStorage.getItem('mockSubscriptionRecordsData');
+  const newsletterSubscriptionsFromStorage = window.localStorage.getItem('mockNewsletterSubscriptionsData');
 
   if (!artworksFromStorage) {
     saveToLocalStorage('mockArtworksData', defaultMockArtworks);
@@ -126,6 +130,10 @@ if (typeof window !== 'undefined') {
   if (!subscriptionRecordsFromStorage) {
     saveToLocalStorage('mockSubscriptionRecordsData', defaultMockSubscriptionRecords);
     _mockSubscriptionRecordsGlobal = defaultMockSubscriptionRecords;
+  }
+  if (!newsletterSubscriptionsFromStorage) {
+    saveToLocalStorage('mockNewsletterSubscriptionsData', defaultMockNewsletterSubscriptions);
+    _mockNewsletterSubscriptionsGlobal = defaultMockNewsletterSubscriptions;
   }
   reSyncData(); 
 }
@@ -148,6 +156,12 @@ export const addSubscriptionRecord = (newRecord: SubscriptionRecord) => {
   _mockSubscriptionRecordsGlobal = [..._mockSubscriptionRecordsGlobal, newRecord];
   saveToLocalStorage('mockSubscriptionRecordsData', _mockSubscriptionRecordsGlobal);
 };
+
+export const addNewsletterSubscription = (newSubscription: NewsletterSubscription) => {
+  _mockNewsletterSubscriptionsGlobal = [..._mockNewsletterSubscriptionsGlobal, newSubscription];
+  saveToLocalStorage('mockNewsletterSubscriptionsData', _mockNewsletterSubscriptionsGlobal);
+};
+
 
 export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {

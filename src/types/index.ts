@@ -47,7 +47,13 @@ export interface SubscriptionRecord {
   artistEmail: string;
   planId: string;
   planName: string;
-  paymentMethod: string; // e.g., "Tarjeta (Simulada)", "PayPal (Simulada)"
+  paymentMethod: string; 
+  subscriptionDate: string; 
+  status: 'Confirmado' | 'Pendiente'; 
+}
+
+export interface NewsletterSubscription {
+  id: string;
+  email: string;
   subscriptionDate: string; // ISO date string
-  status: 'Confirmado' | 'Pendiente'; // Example statuses
 }
