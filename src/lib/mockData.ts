@@ -185,7 +185,7 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'plan3',
     name: 'Priority',
-    pricePerMonth: 25,
+    pricePerMonth: 23,
     photoLimit: 100,
     features: ['Hasta 100 fotos en galería', 'Panel de control', 'Soporte por Chatbot', 'Promoción en newsletter', 'Uso de la App de Collage']
   }
