@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, BadgeDollarSign, Star, CalendarDays, Receipt } from 'lucide-react';
+import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, BadgeDollarSign, Star, CalendarDays, Receipt, Settings, Tag, FileText } from 'lucide-react';
 import { 
   getMockArtists,
   getMockArtworks,
@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
             <TabsTrigger value="manage-artists" className="py-3"><Users className="w-5 h-5 mr-2" />Gestionar Artistas</TabsTrigger>
             <TabsTrigger value="moderate-content" className="py-3"><ImageIconLucide className="w-5 h-5 mr-2" />Moderar Obras</TabsTrigger>
             <TabsTrigger value="verify-payments" className="py-3"><DollarSign className="w-5 h-5 mr-2" />Verificar Pagos</TabsTrigger>
-            <TabsTrigger value="site-settings" className="py-3"><ShieldCheck className="w-5 h-5 mr-2" />Configuración</TabsTrigger>
+            <TabsTrigger value="site-settings" className="py-3"><Settings className="w-5 h-5 mr-2" />Configuración</TabsTrigger>
           </TabsList>
 
           <TabsContent value="manage-artists">
@@ -318,13 +318,41 @@ export default function AdminDashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Configuración del Sitio</CardTitle>
-                <CardDescription>Ajustes generales de la plataforma (funcionalidad por implementar).</CardDescription>
+                <CardDescription>Ajustes generales de la plataforma.</CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Aquí se podrían configurar aspectos como categorías de arte, términos de servicio, etc.</p>
-                 <div className="mt-4 border-2 border-dashed border-border rounded-lg p-10 text-center">
-                    <ShieldCheck className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">La configuración del sitio aún no está implementada.</p>
+              <CardContent className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-semibold text-primary mb-3 flex items-center"><Tag className="w-5 h-5 mr-2 text-accent"/>Gestión de Categorías de Arte</h3>
+                  <p className="text-muted-foreground mb-3">Define y administra las categorías que los artistas pueden usar para sus obras.</p>
+                  <Button variant="outline">Administrar Categorías</Button>
+                   <div className="mt-3 text-xs text-muted-foreground">
+                    (Funcionalidad por implementar)
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-semibold text-primary mb-3 flex items-center"><Star className="w-5 h-5 mr-2 text-accent"/>Contenido Destacado</h3>
+                  <p className="text-muted-foreground mb-3">Selecciona artistas u obras específicas para destacar en la página principal.</p>
+                  <Button variant="outline">Gestionar Destacados</Button>
+                   <div className="mt-3 text-xs text-muted-foreground">
+                    (Funcionalidad por implementar)
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold text-primary mb-3 flex items-center"><FileText className="w-5 h-5 mr-2 text-accent"/>Documentos Legales</h3>
+                  <p className="text-muted-foreground mb-3">Actualiza los enlaces a los Términos y Condiciones y la Política de Privacidad.</p>
+                  <div className="space-y-2">
+                    <Button variant="outline" size="sm">Editar Términos y Condiciones</Button>
+                    <Button variant="outline" size="sm" className="ml-2">Editar Política de Privacidad</Button>
+                  </div>
+                   <div className="mt-3 text-xs text-muted-foreground">
+                    (Funcionalidad por implementar: actualmente los enlaces están en el Footer)
+                  </div>
+                </div>
+                 <div className="mt-6 border-t pt-6 text-center">
+                    <Settings className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+                    <p className="text-muted-foreground">Más opciones de configuración se añadirán aquí a medida que la plataforma crezca.</p>
                 </div>
               </CardContent>
             </Card>
@@ -335,3 +363,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
