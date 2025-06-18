@@ -38,23 +38,18 @@ export default function ArtistProfilePage() {
 
     const currentArtistId = artistIdFromParams;
 
-    if (currentArtistId) {
-      const currentGlobalArtists = getMockArtists();
-      const currentGlobalArtworks = getMockArtworks();
-      const foundArtist = currentGlobalArtists.find(a => a.id === currentArtistId);
-      
-      if (foundArtist) {
-        setArtist(foundArtist);
-        const artworks = currentGlobalArtworks.filter(art => art.artistId === currentArtistId && art.status === 'approved');
-        setArtistArtworks(artworks);
-      } else {
-        setArtist(null); 
-        setArtistArtworks([]);
-      }
+    // No need to check if (currentArtistId) because it's derived from artistIdFromParams which is checked
+    const currentGlobalArtists = getMockArtists();
+    const currentGlobalArtworks = getMockArtworks();
+    const foundArtist = currentGlobalArtists.find(a => a.id === currentArtistId);
+    
+    if (foundArtist) {
+      setArtist(foundArtist);
+      const artworks = currentGlobalArtworks.filter(art => art.artistId === currentArtistId && art.status === 'approved');
+      setArtistArtworks(artworks);
     } else {
-        // This case should be covered by !artistIdFromParams check above
-        setArtist(null); 
-        setArtistArtworks([]);
+      setArtist(null); 
+      setArtistArtworks([]);
     }
     setIsLoading(false);
   }, [artistIdFromParams]); 
@@ -159,7 +154,7 @@ export default function ArtistProfilePage() {
                 <CardHeader className="p-0">
                   <div className="aspect-square relative w-full">
                     <Image
-                      src={artist.profileImageUrl}
+                      src={artist.profileImageUrl || 'https://placehold.co/300x300.png'}
                       alt={artist.name}
                       fill
                       style={{ objectFit: "cover" }}

@@ -16,11 +16,11 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
       <CardHeader className="p-0 relative">
         <div className="aspect-square w-full relative">
           <Image
-            src={artist.profileImageUrl}
+            src={artist.profileImageUrl || 'https://placehold.co/300x300.png'}
             alt={artist.name}
             fill
             style={{ objectFit: "cover" }}
-            className="transition-transform duration-300 group-hover:scale-105"
+            className="transition-transform duration-300 group-hover:scale-105 bg-muted"
             data-ai-hint={artist.dataAiHint || "artist portrait"}
           />
         </div>
