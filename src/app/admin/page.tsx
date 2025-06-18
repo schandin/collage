@@ -257,20 +257,20 @@ export default function AdminDashboardPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[250px]">Nombre</TableHead>
-                        <TableHead>País</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Plan</TableHead>
-                        <TableHead>Fecha Adhesión</TableHead>
-                        <TableHead>Estado</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
+                        <TableHead className="w-[250px] px-4 py-3 align-middle">Nombre</TableHead>
+                        <TableHead className="px-4 py-3 align-middle">País</TableHead>
+                        <TableHead className="px-4 py-3 align-middle">Email</TableHead>
+                        <TableHead className="px-4 py-3 align-middle">Plan</TableHead>
+                        <TableHead className="px-4 py-3 align-middle">Fecha Adhesión</TableHead>
+                        <TableHead className="px-4 py-3 align-middle">Estado</TableHead>
+                        <TableHead className="text-right px-4 py-3 align-middle">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {artistsForUI.map((artist) => (
                         <TableRow key={artist.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
+                          <TableCell className="font-medium px-4 py-1 align-middle">
+                            <div className="flex items-center gap-2">
                               <Image
                                 src={artist.profileImageUrl || 'https://placehold.co/32x32.png'}
                                 alt={artist.name}
@@ -282,25 +282,25 @@ export default function AdminDashboardPage() {
                               <span className="truncate" title={artist.name}>{artist.name}</span>
                             </div>
                           </TableCell>
-                          <TableCell>{artist.country}</TableCell>
-                          <TableCell className="truncate" title={artist.email}>{artist.email}</TableCell>
-                          <TableCell>
+                          <TableCell className="px-4 py-1 align-middle">{artist.country}</TableCell>
+                          <TableCell className="truncate px-4 py-1 align-middle" title={artist.email}>{artist.email}</TableCell>
+                          <TableCell className="px-4 py-1 align-middle">
                             {getPlanBadge(artist.subscriptionPlanId)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-4 py-1 align-middle">
                             {artist.registrationDate ? new Date(artist.registrationDate).toLocaleDateString() : 'N/A'}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="px-4 py-1 align-middle">
                             {getStatusBadge(artist.status)}
                           </TableCell>
-                          <TableCell className="text-right space-x-1">
-                            <Button variant="ghost" size="icon" title="Ver Perfil" onClick={() => router.push(`/artistas/${artist.id}`)}><Eye className="w-4 h-4" /></Button>
+                          <TableCell className="text-right space-x-0.5 px-4 py-1 align-middle">
+                            <Button variant="ghost" size="icon" title="Ver Perfil" onClick={() => router.push(`/artistas/${artist.id}`)} className="h-8 w-8"><Eye className="w-4 h-4" /></Button>
                             {artist.status !== 'active' && artist.status !== 'blocked' && artist.status !== 'deleted' &&
-                              <Button variant="ghost" size="icon" title="Aprobar" onClick={() => handleApproveArtist(artist.id)} className="text-green-600 hover:text-green-700"><UserCheck className="w-4 h-4" /></Button>}
+                              <Button variant="ghost" size="icon" title="Aprobar" onClick={() => handleApproveArtist(artist.id)} className="text-green-600 hover:text-green-700 h-8 w-8"><UserCheck className="w-4 h-4" /></Button>}
                             {artist.status !== 'blocked' && artist.status !== 'deleted' &&
-                              <Button variant="ghost" size="icon" title="Bloquear" onClick={() => handleBlockArtist(artist.id)} className="text-red-600 hover:text-red-700"><UserX className="w-4 h-4" /></Button>}
+                              <Button variant="ghost" size="icon" title="Bloquear" onClick={() => handleBlockArtist(artist.id)} className="text-red-600 hover:text-red-700 h-8 w-8"><UserX className="w-4 h-4" /></Button>}
                             {artist.status !== 'deleted' && 
-                              <Button variant="ghost" size="icon" title="Eliminar (Temporal)" onClick={() => handleSoftDeleteArtist(artist.id)} className="text-orange-600 hover:text-orange-700"><UserMinus className="w-4 h-4" /></Button>}
+                              <Button variant="ghost" size="icon" title="Eliminar (Temporal)" onClick={() => handleSoftDeleteArtist(artist.id)} className="text-orange-600 hover:text-orange-700 h-8 w-8"><UserMinus className="w-4 h-4" /></Button>}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -439,19 +439,19 @@ export default function AdminDashboardPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[250px]">Nombre</TableHead>
-                          <TableHead>País</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Plan</TableHead>
-                          <TableHead>Fecha Adhesión</TableHead>
-                          <TableHead className="text-right">Acciones</TableHead>
+                          <TableHead className="w-[250px] px-4 py-3 align-middle">Nombre</TableHead>
+                          <TableHead className="px-4 py-3 align-middle">País</TableHead>
+                          <TableHead className="px-4 py-3 align-middle">Email</TableHead>
+                          <TableHead className="px-4 py-3 align-middle">Plan</TableHead>
+                          <TableHead className="px-4 py-3 align-middle">Fecha Adhesión</TableHead>
+                          <TableHead className="text-right px-4 py-3 align-middle">Acciones</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {deletedArtistsForUI.map((artist) => (
                           <TableRow key={artist.id}>
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-3">
+                            <TableCell className="font-medium px-4 py-1 align-middle">
+                              <div className="flex items-center gap-2">
                                 <Image
                                   src={artist.profileImageUrl || 'https://placehold.co/32x32.png'}
                                   alt={artist.name}
@@ -463,14 +463,14 @@ export default function AdminDashboardPage() {
                                 <span className="truncate" title={artist.name}>{artist.name}</span>
                               </div>
                             </TableCell>
-                            <TableCell>{artist.country}</TableCell>
-                            <TableCell className="truncate" title={artist.email}>{artist.email}</TableCell>
-                            <TableCell>{getPlanBadge(artist.subscriptionPlanId)}</TableCell>
-                            <TableCell>{artist.registrationDate ? new Date(artist.registrationDate).toLocaleDateString() : 'N/A'}</TableCell>
-                            <TableCell className="text-right space-x-1">
-                              <Button variant="ghost" size="icon" title="Restaurar Artista" onClick={() => handleRestoreArtist(artist.id)} className="text-green-600 hover:text-green-700"><RotateCcw className="w-4 h-4" /></Button>
+                            <TableCell className="px-4 py-1 align-middle">{artist.country}</TableCell>
+                            <TableCell className="truncate px-4 py-1 align-middle" title={artist.email}>{artist.email}</TableCell>
+                            <TableCell className="px-4 py-1 align-middle">{getPlanBadge(artist.subscriptionPlanId)}</TableCell>
+                            <TableCell className="px-4 py-1 align-middle">{artist.registrationDate ? new Date(artist.registrationDate).toLocaleDateString() : 'N/A'}</TableCell>
+                            <TableCell className="text-right space-x-0.5 px-4 py-1 align-middle">
+                              <Button variant="ghost" size="icon" title="Restaurar Artista" onClick={() => handleRestoreArtist(artist.id)} className="text-green-600 hover:text-green-700 h-8 w-8"><RotateCcw className="w-4 h-4" /></Button>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" title="Eliminar Permanentemente" onClick={() => setArtistToDeletePermanentlyId(artist.id)} className="text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /></Button>
+                                <Button variant="ghost" size="icon" title="Eliminar Permanentemente" onClick={() => setArtistToDeletePermanentlyId(artist.id)} className="text-red-600 hover:text-red-700 h-8 w-8"><Trash2 className="w-4 h-4" /></Button>
                               </AlertDialogTrigger>
                             </TableCell>
                           </TableRow>
