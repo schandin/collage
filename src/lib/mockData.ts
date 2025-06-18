@@ -25,6 +25,7 @@ const defaultMockArtists: Artist[] = [
     dataAiHint: 'artist portrait',
     status: 'active',
     subscriptionPlanId: 'plan2', 
+    registrationDate: new Date(2024, 0, 15).toISOString(), // Jan 15, 2024
   },
   {
     id: 'artist2',
@@ -39,6 +40,7 @@ const defaultMockArtists: Artist[] = [
     dataAiHint: 'artist studio',
     status: 'active',
     subscriptionPlanId: 'plan2', 
+    registrationDate: new Date(2024, 1, 20).toISOString(), // Feb 20, 2024
   },
   {
     id: 'artist3',
@@ -52,6 +54,7 @@ const defaultMockArtists: Artist[] = [
     dataAiHint: 'woman artist',
     status: 'pending_approval',
     subscriptionPlanId: 'plan1', 
+    registrationDate: new Date(2024, 2, 10).toISOString(), // Mar 10, 2024
   },
 ];
 
@@ -142,15 +145,16 @@ export const updateAndSaveArtists = (updatedArtists: Artist[]) => {
   _mockArtistsGlobal = [...updatedArtists]; 
   reSyncData(); 
   saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); 
-  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal); 
+  // No need to save artworks here unless artist name change affects them, which reSyncData handles before save.
 };
 
 export const updateAndSaveArtworks = (updatedArtworks: Artwork[]) => {
   _mockArtworksGlobal = [...updatedArtworks]; 
   reSyncData(); 
   saveToLocalStorage('mockArtworksData', _mockArtworksGlobal); 
-  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal); 
+  // No need to save artists here unless artwork count affects them, which reSyncData handles before save.
 };
+
 
 export const addSubscriptionRecord = (newRecord: SubscriptionRecord) => {
   _mockSubscriptionRecordsGlobal = [..._mockSubscriptionRecordsGlobal, newRecord];
@@ -186,3 +190,13 @@ export const mockSubscriptionPlans: SubscriptionPlan[] = [
     features: ['Hasta 100 fotos en galería', 'Panel de control', 'Soporte por Chatbot', 'Promoción en newsletter', 'Uso de la App de Collage']
   }
 ];
+
+// Function to permanently delete an artist and their artworks
+export const permanentlyDeleteArtistAndArtworks = (artistId: string) => {
+  _mockArtworksGlobal = _mockArtworksGlobal.filter(artwork => artwork.artistId !== artistId);
+  _mockArtistsGlobal = _mockArtistsGlobal.filter(artist => artist.id !== artistId);
+  
+  saveToLocalStorage('mockArtworksData', _mockArtworksGlobal);
+  saveToLocalStorage('mockArtistsData', _mockArtistsGlobal);
+};
+

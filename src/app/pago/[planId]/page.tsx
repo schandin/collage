@@ -103,6 +103,7 @@ export default function PaymentPage() {
       subscriptionPlanId: selectedPlan.id,
       bio: '',
       dataAiHint: '',
+      registrationDate: new Date().toISOString(),
     };
 
     const currentArtists = getMockArtists();
@@ -307,3 +308,4 @@ export default function PaymentPage() {
     </div>
   );
 }
+

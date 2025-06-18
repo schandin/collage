@@ -29,8 +29,9 @@ export interface Artist {
   bio?: string;
   artworks: Artwork[];
   dataAiHint?: string;
-  status?: 'active' | 'pending_approval' | 'blocked' | 'profile_incomplete';
+  status?: 'active' | 'pending_approval' | 'blocked' | 'profile_incomplete' | 'deleted';
   subscriptionPlanId?: string; 
+  registrationDate?: string; // ISO date string
 }
 
 export interface SubscriptionPlan {
@@ -57,3 +58,4 @@ export interface NewsletterSubscription {
   email: string;
   subscriptionDate: string; // ISO date string
 }
+

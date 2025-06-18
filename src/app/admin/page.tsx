@@ -9,7 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, BadgeDollarSign, Star, CalendarDays, Receipt, Settings, Tag, FileText, MailCheck } from 'lucide-react';
+import { 
+  UserCheck, UserX, Eye, CheckCircle, XCircle, DollarSign, Users, Image as ImageIconLucide, ShieldCheck, 
+  BadgeDollarSign, Star, CalendarDays, Receipt, Settings, Tag, FileText, MailCheck, UserMinus, RotateCcw, Trash2, Archive
+} from 'lucide-react';
+import { 
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, 
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+
 import { 
   getMockArtists,
   getMockArtworks,
@@ -17,7 +25,8 @@ import {
   getMockNewsletterSubscriptions,
   updateAndSaveArtists,
   updateAndSaveArtworks,
-  mockSubscriptionPlans 
+  mockSubscriptionPlans,
+  permanentlyDeleteArtistAndArtworks
 } from '@/lib/mockData';
 import type { Artist, Artwork, SubscriptionPlan, SubscriptionRecord, NewsletterSubscription } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -29,10 +38,12 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
   
   const [artistsForUI, setArtistsForUI] = useState<Artist[]>([]);
+  const [deletedArtistsForUI, setDeletedArtistsForUI] = useState<Artist[]>([]);
   const [pendingArtworksForUI, setPendingArtworksForUI] = useState<Artwork[]>([]);
   const [subscriptionRecordsForUI, setSubscriptionRecordsForUI] = useState<SubscriptionRecord[]>([]);
   const [newsletterSubscriptionsForUI, setNewsletterSubscriptionsForUI] = useState<NewsletterSubscription[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [artistToDeletePermanentlyId, setArtistToDeletePermanentlyId] = useState<string | null>(null);
 
   useEffect(() => {
     const authStatus = localStorage.getItem('isAdminAuthenticated');
@@ -52,7 +63,9 @@ export default function AdminDashboardPage() {
   }
 
   const refreshArtistsUI = () => {
-    setArtistsForUI(getMockArtists().map(a => ({...a})));
+    const currentGlobalArtists = getMockArtists();
+    setArtistsForUI(currentGlobalArtists.filter(a => a.status !== 'deleted').map(a => ({...a})));
+    setDeletedArtistsForUI(currentGlobalArtists.filter(a => a.status === 'deleted').map(a => ({...a})));
   }
 
   const refreshArtworksUI = () => {
@@ -90,6 +103,38 @@ export default function AdminDashboardPage() {
 
     const blockedArtistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
     toast({ title: "Artista Bloqueado", description: `El artista ${blockedArtistName} ha sido bloqueado.`, variant: "destructive" });
+  };
+
+  const handleSoftDeleteArtist = (artistId: string) => {
+    const currentGlobalArtists = getMockArtists();
+    const updatedGlobalArtists = currentGlobalArtists.map(a =>
+      a.id === artistId ? { ...a, status: 'deleted' } : a
+    );
+    updateAndSaveArtists(updatedGlobalArtists);
+    refreshArtistsUI();
+    const artistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
+    toast({ title: "Artista Eliminado (Temporalmente)", description: `El artista ${artistName} ha sido movido a la lista de eliminados.`});
+  };
+
+  const handleRestoreArtist = (artistId: string) => {
+    const currentGlobalArtists = getMockArtists();
+    const updatedGlobalArtists = currentGlobalArtists.map(a =>
+      a.id === artistId ? { ...a, status: 'pending_approval' } : a // Restore to pending approval
+    );
+    updateAndSaveArtists(updatedGlobalArtists);
+    refreshArtistsUI();
+    const artistName = updatedGlobalArtists.find(a => a.id === artistId)?.name || artistId;
+    toast({ title: "Artista Restaurado", description: `El artista ${artistName} ha sido restaurado y está pendiente de aprobación.` });
+  };
+
+  const confirmPermanentDelete = () => {
+    if (artistToDeletePermanentlyId) {
+      const artistName = getMockArtists().find(a => a.id === artistToDeletePermanentlyId)?.name || artistToDeletePermanentlyId;
+      permanentlyDeleteArtistAndArtworks(artistToDeletePermanentlyId);
+      refreshAllUIData(); // Refresh all data as artworks might be affected
+      toast({ title: "Artista Eliminado Permanentemente", description: `El artista ${artistName} y sus obras han sido eliminados.`, variant: "destructive" });
+      setArtistToDeletePermanentlyId(null);
+    }
   };
   
   const handleApproveArtwork = (artworkId: string) => {
@@ -149,6 +194,36 @@ export default function AdminDashboardPage() {
       </Badge>
     );
   };
+  
+  const getStatusBadge = (status?: Artist['status']) => {
+    let text = 'Desconocido';
+    let className = 'bg-gray-100 text-gray-800 border-gray-400 hover:bg-gray-200';
+
+    switch (status) {
+        case 'active':
+            text = 'Activo';
+            className = 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200';
+            break;
+        case 'pending_approval':
+            text = 'Pend. Aprob.';
+            className = 'bg-yellow-100 text-yellow-800 border-yellow-400 hover:bg-yellow-200';
+            break;
+        case 'profile_incomplete':
+            text = 'Perfil Incomp.';
+            className = 'bg-orange-100 text-orange-800 border-orange-400 hover:bg-orange-200';
+            break;
+        case 'blocked':
+            text = 'Bloqueado';
+            className = 'bg-red-100 text-red-800 border-red-400 hover:bg-red-200';
+            break;
+        case 'deleted':
+            text = 'Eliminado';
+            className = 'bg-slate-200 text-slate-800 border-slate-400 hover:bg-slate-300 line-through';
+            break;
+    }
+    return <Badge variant="outline" className={className}>{text}</Badge>;
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -162,11 +237,12 @@ export default function AdminDashboardPage() {
         </div>
 
         <Tabs defaultValue="manage-artists" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2 mb-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 gap-2 mb-6">
             <TabsTrigger value="manage-artists" className="py-3"><Users className="w-5 h-5 mr-2" />Gestionar Artistas</TabsTrigger>
             <TabsTrigger value="moderate-content" className="py-3"><ImageIconLucide className="w-5 h-5 mr-2" />Moderar Obras</TabsTrigger>
             <TabsTrigger value="verify-payments" className="py-3"><DollarSign className="w-5 h-5 mr-2" />Verificar Pagos</TabsTrigger>
             <TabsTrigger value="newsletter-subscribers" className="py-3"><MailCheck className="w-5 h-5 mr-2" />Suscriptores Newsletter</TabsTrigger>
+            <TabsTrigger value="deleted-artists" className="py-3"><Archive className="w-5 h-5 mr-2" />Artistas Eliminados</TabsTrigger>
             <TabsTrigger value="site-settings" className="py-3"><Settings className="w-5 h-5 mr-2" />Configuración</TabsTrigger>
           </TabsList>
 
@@ -184,6 +260,7 @@ export default function AdminDashboardPage() {
                       <TableHead>País</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Plan</TableHead>
+                      <TableHead>Fecha Adhesión</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
@@ -194,7 +271,7 @@ export default function AdminDashboardPage() {
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-3">
                             <Image
-                              src={artist.profileImageUrl || 'https://placehold.co/40x40.png'}
+                              src={artist.profileImageUrl || 'https://placehold.co/32x32.png'}
                               alt={artist.name}
                               width={32}
                               height={32}
@@ -210,25 +287,19 @@ export default function AdminDashboardPage() {
                           {getPlanBadge(artist.subscriptionPlanId)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={artist.status === 'active' ? 'default' : artist.status === 'pending_approval' ? 'secondary' : artist.status === 'profile_incomplete' ? 'secondary' : 'destructive'}
-                           className={
-                             artist.status === 'active' ? 'bg-green-100 text-green-800 border-green-400 hover:bg-green-200' 
-                             : (artist.status === 'pending_approval' || artist.status === 'profile_incomplete') ? 'bg-yellow-100 text-yellow-800 border-yellow-400 hover:bg-yellow-200' 
-                             : 'bg-red-100 text-red-800 border-red-400 hover:bg-red-200'
-                            }
-                          >
-                            {artist.status === 'active' ? 'Activo' 
-                             : artist.status === 'pending_approval' ? 'Pendiente Aprob.'
-                             : artist.status === 'profile_incomplete' ? 'Perfil Incomp.'
-                             : 'Bloqueado'}
-                          </Badge>
+                          {artist.registrationDate ? new Date(artist.registrationDate).toLocaleDateString() : 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {getStatusBadge(artist.status)}
                         </TableCell>
                         <TableCell className="text-right space-x-1">
                           <Button variant="ghost" size="icon" title="Ver Perfil" onClick={() => router.push(`/artistas/${artist.id}`)}><Eye className="w-4 h-4" /></Button>
-                          {artist.status !== 'active' && 
+                          {artist.status !== 'active' && artist.status !== 'blocked' && artist.status !== 'deleted' &&
                             <Button variant="ghost" size="icon" title="Aprobar" onClick={() => handleApproveArtist(artist.id)} className="text-green-600 hover:text-green-700"><UserCheck className="w-4 h-4" /></Button>}
-                          {artist.status !== 'blocked' && 
+                          {artist.status !== 'blocked' && artist.status !== 'deleted' &&
                             <Button variant="ghost" size="icon" title="Bloquear" onClick={() => handleBlockArtist(artist.id)} className="text-red-600 hover:text-red-700"><UserX className="w-4 h-4" /></Button>}
+                          {artist.status !== 'deleted' && 
+                            <Button variant="ghost" size="icon" title="Eliminar (Temporal)" onClick={() => handleSoftDeleteArtist(artist.id)} className="text-orange-600 hover:text-orange-700"><UserMinus className="w-4 h-4" /></Button>}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -355,6 +426,65 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="deleted-artists">
+            <Card>
+              <CardHeader>
+                <CardTitle>Artistas Eliminados (Temporalmente)</CardTitle>
+                <CardDescription>Artistas que han sido marcados para eliminación. Pueden ser restaurados o eliminados permanentemente.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {deletedArtistsForUI.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[250px]">Nombre</TableHead>
+                        <TableHead>País</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>Fecha Adhesión</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {deletedArtistsForUI.map((artist) => (
+                        <TableRow key={artist.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                              <Image
+                                src={artist.profileImageUrl || 'https://placehold.co/32x32.png'}
+                                alt={artist.name}
+                                width={32}
+                                height={32}
+                                className="rounded-full object-cover aspect-square"
+                                data-ai-hint="artist avatar"
+                              />
+                              <span className="truncate" title={artist.name}>{artist.name}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{artist.country}</TableCell>
+                          <TableCell className="truncate" title={artist.email}>{artist.email}</TableCell>
+                          <TableCell>{getPlanBadge(artist.subscriptionPlanId)}</TableCell>
+                          <TableCell>{artist.registrationDate ? new Date(artist.registrationDate).toLocaleDateString() : 'N/A'}</TableCell>
+                          <TableCell className="text-right space-x-1">
+                            <Button variant="ghost" size="icon" title="Restaurar Artista" onClick={() => handleRestoreArtist(artist.id)} className="text-green-600 hover:text-green-700"><RotateCcw className="w-4 h-4" /></Button>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" title="Eliminar Permanentemente" onClick={() => setArtistToDeletePermanentlyId(artist.id)} className="text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /></Button>
+                            </AlertDialogTrigger>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="mt-4 border-2 border-dashed border-border rounded-lg p-10 text-center">
+                    <Archive className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No hay artistas eliminados temporalmente.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
           
           <TabsContent value="site-settings">
             <Card>
@@ -402,6 +532,23 @@ export default function AdminDashboardPage() {
         </Tabs>
       </main>
       <Footer />
+      <AlertDialog open={!!artistToDeletePermanentlyId} onOpenChange={(open) => !open && setArtistToDeletePermanentlyId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente al artista y todas sus obras asociadas de la plataforma.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setArtistToDeletePermanentlyId(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmPermanentDelete} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+              Sí, eliminar permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
+
