@@ -10,18 +10,19 @@ import { ChevronRight, Palette, User } from 'lucide-react';
 
 interface CarouselItem {
   type: 'profile' | 'artwork';
-  id: string; 
+  id: string;
   url: string;
   title?: string;
   dataAiHint?: string;
-  artworkData?: Artwork; 
+  artworkData?: Artwork;
 }
 
 interface ArtistAutoCarouselCardProps {
   artist: Artist;
   artworks: Artwork[];
   onArtworkClick: (artwork: Artwork) => void;
-  priority?: boolean; // true for Priority artists (all artworks), false for Advanced (up to 5 artworks)
+  priority?: boolean;
+  intervalMs?: number; // New prop for custom interval duration
 }
 
 export default function ArtistAutoCarouselCard({
@@ -29,18 +30,19 @@ export default function ArtistAutoCarouselCard({
   artworks,
   onArtworkClick,
   priority = false,
+  intervalMs,
 }: ArtistAutoCarouselCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayItems, setDisplayItems] = useState<CarouselItem[]>([]);
 
   useEffect(() => {
     const items: CarouselItem[] = [
-      { 
-        type: 'profile', 
-        id: `profile-${artist.id}`, 
-        url: artist.profileImageUrl || 'https://placehold.co/300x300.png', 
-        title: artist.name, 
-        dataAiHint: artist.dataAiHint || 'artist portrait' 
+      {
+        type: 'profile',
+        id: `profile-${artist.id}`,
+        url: artist.profileImageUrl || 'https://placehold.co/300x300.png',
+        title: artist.name,
+        dataAiHint: artist.dataAiHint || 'artist portrait'
       },
       ...artworks.map(art => ({
         type: 'artwork' as const,
@@ -52,18 +54,20 @@ export default function ArtistAutoCarouselCard({
       }))
     ];
     setDisplayItems(items);
-    setCurrentIndex(0); // Reset index when artist/artworks change
+    setCurrentIndex(0);
   }, [artist, artworks]);
 
   useEffect(() => {
-    if (displayItems.length <= 1) return; 
+    if (displayItems.length <= 1) return;
+
+    const actualInterval = intervalMs ?? 3500; // Default to 3.5 seconds if not provided
 
     const intervalId = setInterval(() => {
       setCurrentIndex(prevIndex => (prevIndex + 1) % displayItems.length);
-    }, 3500); // Change image every 3.5 seconds
+    }, actualInterval);
 
     return () => clearInterval(intervalId);
-  }, [displayItems.length]);
+  }, [displayItems.length, intervalMs]); // Add intervalMs to dependency array
 
   const handleImageClick = useCallback(() => {
     const currentItem = displayItems[currentIndex];
@@ -116,7 +120,7 @@ export default function ArtistAutoCarouselCard({
             style={{ objectFit: 'cover' }}
             className={`transition-opacity duration-700 ease-in-out absolute inset-0 ${index === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
             data-ai-hint={item.dataAiHint}
-            priority={index === 0} // Prioritize loading the first image (profile or first artwork)
+            priority={index === 0}
           />
         ))}
         <div className="absolute bottom-0 left-0 right-0 p-2 text-sm font-semibold text-white truncate transition-opacity duration-300 bg-gradient-to-t from-black/60 via-black/30 to-transparent group-hover:opacity-100">
@@ -126,8 +130,7 @@ export default function ArtistAutoCarouselCard({
       </div>
       <div className="p-4 mt-auto border-t">
         <Button variant="outline" asChild className="w-full border-accent text-accent hover:bg-accent hover:text-accent-foreground">
-          {/* As per request, "el mismo boton de 'explorar galerias' que hay arriba" which links to /artistas */}
-          <Link href="/artistas"> 
+          <Link href="/artistas">
             Explorar Galerías <ChevronRight className="w-4 h-4 ml-1" />
           </Link>
         </Button>
@@ -135,4 +138,3 @@ export default function ArtistAutoCarouselCard({
     </div>
   );
 }
-

@@ -20,7 +20,7 @@ interface ArtistWithArtworks {
 export default function Home() {
   const [priorityArtistsData, setPriorityArtistsData] = useState<ArtistWithArtworks[]>([]);
   const [advancedArtistsData, setAdvancedArtistsData] = useState<ArtistWithArtworks[]>([]);
-  
+
   const [selectedArtworkForModal, setSelectedArtworkForModal] = useState<ArtworkType | null>(null);
   const [selectedArtistForModal, setSelectedArtistForModal] = useState<ArtistType | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,7 +29,6 @@ export default function Home() {
     const allArtists = getMockArtists();
     const allArtworks = getMockArtworks();
 
-    // Priority Artists (plan3) - up to 4
     const priorityPlanId = 'plan3';
     const activePriorityArtists = allArtists.filter(
       artist => artist.status === 'active' && artist.subscriptionPlanId === priorityPlanId
@@ -38,21 +37,20 @@ export default function Home() {
     const prepPriorityData = activePriorityArtists.map(artist => {
       const artworks = allArtworks.filter(
         art => art.artistId === artist.id && art.status === 'approved'
-      ); // All approved artworks
+      );
       return { artist, artworks };
     });
     setPriorityArtistsData(prepPriorityData);
 
-    // Advanced Artists (plan2) - up to 6
     const advancedPlanId = 'plan2';
     const activeAdvancedArtists = allArtists.filter(
       artist => artist.status === 'active' && artist.subscriptionPlanId === advancedPlanId
     ).slice(0, 6);
-    
+
     const prepAdvancedData = activeAdvancedArtists.map(artist => {
       const artworks = allArtworks.filter(
         art => art.artistId === artist.id && art.status === 'approved'
-      ).slice(0, 5); // Max 5 artworks
+      ).slice(0, 5);
       return { artist, artworks };
     });
     setAdvancedArtistsData(prepAdvancedData);
@@ -100,7 +98,7 @@ export default function Home() {
         <section className="py-16 bg-card">
           <div className="container mx-auto px-4">
             <h2 className="text-4xl font-headline text-primary mb-12 text-center flex items-center justify-center">
-              <ShieldCheck className="w-10 h-10 mr-3 text-purple-500" /> {/* Icon for Priority */}
+              <ShieldCheck className="w-10 h-10 mr-3 text-purple-500" />
               Artistas Destacados
             </h2>
             {priorityArtistsData.length > 0 ? (
@@ -112,6 +110,7 @@ export default function Home() {
                     artworks={artworks}
                     onArtworkClick={handleOpenModal}
                     priority={true}
+                    // intervalMs={3500} // Uses default 3500ms
                   />
                 ))}
               </div>
@@ -119,7 +118,7 @@ export default function Home() {
               <div className="text-center py-10 px-4 border-2 border-dashed border-muted-foreground/30 rounded-lg bg-background">
                 <Users className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
                 <p className="text-muted-foreground">
-                  Aún no hay artistas Priority para mostrar. ¡Vuelve pronto!
+                  Aún no hay artistas Destacados para mostrar. ¡Vuelve pronto!
                 </p>
               </div>
             )}
@@ -130,11 +129,11 @@ export default function Home() {
         <section className="py-16 bg-background">
           <div className="container mx-auto px-4">
             <h2 className="text-4xl font-headline text-primary text-center mb-12 flex items-center justify-center">
-              <Star className="w-10 h-10 mr-3 text-yellow-500" /> {/* Icon for Advanced */}
+              <Star className="w-10 h-10 mr-3 text-yellow-500" />
               Galería de Artistas
             </h2>
             {advancedArtistsData.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"> {/* Up to 6, so 3 per row on medium+ */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                 {advancedArtistsData.map(({ artist, artworks }) => (
                   <ArtistAutoCarouselCard
                     key={artist.id}
@@ -142,6 +141,7 @@ export default function Home() {
                     artworks={artworks}
                     onArtworkClick={handleOpenModal}
                     priority={false}
+                    intervalMs={5000} // Slower interval: 5 seconds
                   />
                 ))}
               </div>
@@ -149,13 +149,13 @@ export default function Home() {
               <div className="text-center py-10 px-4 border-2 border-dashed border-muted-foreground/30 rounded-lg bg-card">
                 <Palette className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
                 <p className="text-muted-foreground">
-                  Aún no hay artistas con plan Avanzado para mostrar aquí.
+                  Aún no hay artistas en esta galería para mostrar aquí.
                 </p>
               </div>
             )}
           </div>
         </section>
-        
+
         {/* Call to Action Section */}
         <section className="py-20 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
@@ -179,4 +179,3 @@ export default function Home() {
     </div>
   );
 }
-
